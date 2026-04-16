@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "ForwardService"
+  },
+  "auth": {
+    "sign_in": "Entrar",
+    "email": "E-mail",
+    "password": "Senha",
+    "loading": "Carregando",
+    "error": "Nao foi possivel entrar. Verifique suas credenciais."
+  },
+  "tabs": {
+    "home": "Inicio",
+    "leads": "Leads",
+    "schedule": "Agenda",
+    "profile": "Perfil"
+  },
+  "home": {
+    "greeting": "Ola",
+    "todays_leads": "Leads de hoje",
+    "empty": "Nenhum lead no momento",
+    "error": "Falha ao carregar dados"
+  },
+  "lead": {
+    "priority": "Prioridade",
+    "status": "Status",
+    "reason": "Motivo",
+    "expected_value": "Valor esperado",
+    "view_customer": "Ver cliente",
+    "call": "Ligar",
+    "message": "Enviar WhatsApp"
+  },
+  "segment": {
+    "fiel": "Fiel",
+    "abandono": "Abandono",
+    "esquecido": "Esquecido",
+    "economico": "Economico"
+  },
+  "priority": {
+    "low": "Baixa",
+    "medium": "Media",
+    "high": "Alta",
+    "critical": "Critica"
+  },
+  "status": {
+    "new": "Novo",
+    "assigned": "Atribuido",
+    "contacted": "Contatado",
+    "converted": "Convertido",
+    "lost": "Perdido",
+    "expired": "Expirado"
+  },
+  "profile": {
+    "sign_out": "Sair"
+  }
+}
