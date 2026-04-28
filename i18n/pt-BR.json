@@ -2,6 +2,9 @@
   "app": {
     "name": "ForwardService"
   },
+  "intro": {
+    "skip": "Pular"
+  },
   "auth": {
     "sign_in": "Entrar",
     "email": "E-mail",

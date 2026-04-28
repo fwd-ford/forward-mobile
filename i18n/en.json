@@ -1,5 +1,6 @@
 {
   "app": { "name": "ForwardService" },
+  "intro": { "skip": "Skip" },
   "auth": {
     "sign_in": "Sign in",
     "email": "Email",
