@@ -29,7 +29,7 @@ components/
   ui/                   Button, Card, Badge (primitives)
   domain/               LeadCard (business)
 lib/
-  api.ts                Typed client for forward-api
+  api.ts                Typed client for forward-api-java
   supabase.ts           Supabase client (SecureStore-backed session)
   auth.ts               useSession hook + sign in/out
   theme.ts              Design tokens (colors, spacing, radius, typography)
@@ -54,7 +54,7 @@ Web (for quick testing): `npm run web`
 
 `app.json` holds the three runtime values under `expo.extra`:
 
-- `apiBaseUrl` — URL of `forward-api` (default `http://localhost:18080`)
+- `apiBaseUrl` — URL of `forward-api-java` (default `http://localhost:18080`)
 - `supabaseUrl` — Supabase project URL
 - `supabaseAnonKey` — Supabase anon/publishable key
 
@@ -70,7 +70,7 @@ On a physical device, replace `localhost` with your machine's LAN IP so the phon
 ## Sprint 1 scope
 
 - Auth (email/password) via Supabase
-- Home: today's leads (from `forward-api`)
+- Home: today's leads (from `forward-api-java`)
 - Leads list with detail view
 - Profile + sign out
 - i18n (pt-BR default, en supported)

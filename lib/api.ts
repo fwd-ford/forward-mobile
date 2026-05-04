@@ -1,5 +1,5 @@
-// Typed client for the forward-api REST endpoints.
-// Cliente tipado para o forward-api.
+// Typed client for the forward-api-java REST endpoints.
+// Cliente tipado para o forward-api-java.
 
 import Constants from "expo-constants";
 
@@ -40,8 +40,8 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
   return (await res.json()) as T;
 }
 
-// Domain types mirror the Go server structs.
-// Tipos de dominio espelham os DTOs do forward-api.
+// Domain types mirror the forward-api-java DTOs (records under com.fwdford.forwardapi.model).
+// Tipos de dominio espelham os DTOs do forward-api-java.
 
 export interface Vehicle {
   vin: string;

@@ -31,7 +31,7 @@
 
 ### Data
 - Supabase SDK is the primary data source.
-- Go API called only for WhatsApp send actions.
+- forward-api-java (Spring Boot, REST on port 8080) is called for SOA-scoped reads (customers, vehicles, leads, scores) and for triggering WhatsApp sends via N8N.
 - Never store sensitive data in AsyncStorage without encryption.
 
 ### Components
