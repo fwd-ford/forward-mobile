@@ -1,0 +1,11 @@
+# Gitleaks config for forward-mobile.
+# Configuracao do gitleaks para o forward-mobile.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Expo public runtime config — Supabase anon key is public by design (RLS protects data)"
+paths = [
+    '''^app\.json$''',
+]
