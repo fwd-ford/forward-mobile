@@ -1,17 +1,23 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, View, type ViewProps } from "react-native";
-import { colors, radius, spacing } from "@/lib/theme";
+
+import { useTheme } from "@/context/ThemeContext";
+import { radius, spacing, type ThemeColors } from "@/lib/theme";
 
 export function Card({ style, ...rest }: ViewProps) {
-  return <View {...rest} style={[styles.card, style]} />;
+  const { colors, elevation } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return <View {...rest} style={[styles.card, elevation.sm, style]} />;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-});
+function createStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+  });
+}

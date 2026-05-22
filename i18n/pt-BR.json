@@ -8,7 +8,9 @@
   "auth": {
     "sign_in": "Entrar",
     "email": "E-mail",
+    "email_placeholder": "voce@empresa.com",
     "password": "Senha",
+    "subtitle": "Bem-vindo. Entre para acessar seus leads.",
     "loading": "Carregando",
     "error": "Nao foi possivel entrar. Verifique suas credenciais."
   },
@@ -22,7 +24,21 @@
     "greeting": "Ola",
     "todays_leads": "Leads de hoje",
     "empty": "Nenhum lead no momento",
+    "empty_title": "Sem leads por enquanto",
+    "empty_description": "Quando novos leads forem atribuidos a voce, eles aparecem aqui.",
     "error": "Falha ao carregar dados"
+  },
+  "loading": {
+    "profile": "Carregando perfil"
+  },
+  "validation": {
+    "email_required": "Informe seu e-mail",
+    "email_invalid": "E-mail invalido",
+    "password_required": "Informe sua senha",
+    "password_too_short": "Senha precisa de pelo menos {{count}} caracteres",
+    "name_required": "Informe seu nome",
+    "name_short": "Nome muito curto",
+    "required": "Campo obrigatorio"
   },
   "lead": {
     "priority": "Prioridade",
@@ -54,6 +70,14 @@
     "expired": "Expirado"
   },
   "profile": {
-    "sign_out": "Sair"
+    "sign_out": "Sair",
+    "unnamed": "Sem nome",
+    "account": "Conta",
+    "appearance": "Aparencia",
+    "dark_mode": "Modo escuro",
+    "light_mode": "Modo claro",
+    "theme_auto": "Seguindo o sistema",
+    "theme_manual": "Override manual ativo",
+    "follow_system": "Voltar a seguir o sistema"
   }
 }

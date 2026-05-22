@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions } from "react-native";
 import Animated, {
   runOnJS,
@@ -9,7 +9,8 @@ import Animated, {
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 
-import { colors, radius, spacing, typography } from "@/lib/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 // Local asset — bundled into the binary, no runtime download.
 // Asset local — empacotado no binario, sem download em runtime.
@@ -23,6 +24,8 @@ export interface IntroVideoProps {
 
 export function IntroVideo({ onFinished }: IntroVideoProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { width, height } = useWindowDimensions();
   const opacity = useSharedValue(1);
   const finished = useRef(false);
@@ -61,38 +64,35 @@ export function IntroVideo({ onFinished }: IntroVideoProps) {
           allowsPictureInPicture={false}
         />
       </Pressable>
-      <Pressable
-        onPress={finish}
-        hitSlop={12}
-        style={styles.skip}
-        accessibilityRole="button"
-      >
+      <Pressable onPress={finish} hitSlop={12} style={styles.skip} accessibilityRole="button">
         <Text style={styles.skipLabel}>{t("intro.skip")}</Text>
       </Pressable>
     </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.bg,
-    zIndex: 100,
-  },
-  fill: { flex: 1 },
-  skip: {
-    position: "absolute",
-    top: spacing.xxl + spacing.md,
-    right: spacing.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: "rgba(11,18,32,0.55)",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  skipLabel: {
-    ...typography.caption,
-    color: colors.text,
-  },
-});
+function createStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    root: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: c.bg,
+      zIndex: 100,
+    },
+    fill: { flex: 1 },
+    skip: {
+      position: "absolute",
+      top: spacing["3xl"] + spacing.md,
+      right: spacing.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.pill,
+      backgroundColor: "rgba(11,18,32,0.55)",
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    skipLabel: {
+      ...typography.caption,
+      color: "#FFFFFF",
+    },
+  });
+}
