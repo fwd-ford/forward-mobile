@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { LocalePicker } from "@/components/ui/LocalePicker";
+import { PhotoButton } from "@/components/ui/PhotoButton";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useLocale } from "@/context/LocaleContext";
@@ -187,16 +188,12 @@ export default function ProfileScreen() {
             label={t("profile.camera")}
             onPress={onPickFromCamera}
             disabled={uploadingPhoto}
-            colors={colors}
-            styles={styles}
           />
           <PhotoButton
             icon="images-outline"
             label={t("profile.gallery")}
             onPress={onPickFromLibrary}
             disabled={uploadingPhoto}
-            colors={colors}
-            styles={styles}
           />
           {profile?.avatar_url ? (
             <PhotoButton
@@ -204,8 +201,6 @@ export default function ProfileScreen() {
               label={t("profile.remove")}
               onPress={onRemovePhoto}
               disabled={uploadingPhoto}
-              colors={colors}
-              styles={styles}
               destructive
             />
           ) : null}
@@ -292,61 +287,6 @@ export default function ProfileScreen() {
   );
 }
 
-type PhotoButtonProps = {
-  icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
-  label: string;
-  onPress: () => void;
-  disabled: boolean;
-  destructive?: boolean;
-  colors: ThemeColors;
-  styles: ReturnType<typeof createStyles>;
-};
-
-function PhotoButton({
-  icon,
-  label,
-  onPress,
-  disabled,
-  destructive,
-  colors,
-  styles,
-}: PhotoButtonProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        styles.photoButton,
-        pressed && styles.pressedSoft,
-        disabled && { opacity: 0.5 },
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <View
-        style={[
-          styles.photoIconWrap,
-          destructive ? { backgroundColor: colors.errorSoft } : undefined,
-        ]}
-      >
-        <Ionicons
-          name={icon}
-          size={18}
-          color={destructive ? colors.error : colors.primary}
-        />
-      </View>
-      <Text
-        style={[
-          styles.photoButtonLabel,
-          destructive ? { color: colors.error } : undefined,
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg },
@@ -410,29 +350,6 @@ function createStyles(c: ThemeColors) {
       gap: spacing.sm,
       paddingHorizontal: spacing.xl,
       marginBottom: spacing.lg,
-    },
-    photoButton: {
-      flex: 1,
-      backgroundColor: c.surface,
-      borderRadius: radius.lg,
-      paddingVertical: spacing.md + 2,
-      alignItems: "center",
-      gap: spacing.sm,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    photoIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: c.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    photoButtonLabel: {
-      ...typography.caption,
-      fontWeight: "600",
-      color: c.text,
     },
     themeCard: {
       flexDirection: "row",
