@@ -1,3 +1,8 @@
+// Leads — Glass Minimalist redesign (Fase 2, screen 3/6).
+// Header: labelCaps with count + Fraunces 40 "Leads" title.
+// Inline glass search bar + filter chips (active=solid pill, inactive=glass).
+// LeadCard list already migrated to GlassSurface in the Home PR.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -6,8 +11,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 
@@ -15,13 +22,12 @@ import { LeadCard } from "@/components/domain/LeadCard";
 import { LeadCardSkeleton } from "@/components/domain/LeadCardSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { Input } from "@/components/ui/Input";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { getAccessToken } from "@/lib/session";
-import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 type FilterKey = "all" | "critical" | "today" | "forgotten";
 
@@ -51,7 +57,6 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
       out = out.filter((l) => l.priority === "critical");
       break;
     case "today": {
-      // Hoje = a partir do inicio do dia local, nao "ultimas 24h".
       const cutoff = startOfTodayMs();
       out = out.filter((l) => {
         const t = parseTimestamp(l.created_at);
@@ -60,9 +65,7 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
       break;
     }
     case "forgotten": {
-      // Proxy para "sem follow-up ha >=30d": status ainda nao avancou
-      // (new/assigned) e created_at >=30d atras. Quando o backend expor
-      // last_contact_at, trocar pra esse campo.
+      // Proxy para "sem follow-up ha >=30d": status ainda nao avancou e created_at >=30d.
       const cutoff = Date.now() - 30 * DAY_MS;
       out = out.filter((l) => {
         if (l.status === "contacted" || l.status === "converted") return false;
@@ -99,6 +102,7 @@ export default function LeadsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -135,58 +139,93 @@ export default function LeadsScreen() {
     setFilter(k);
   }
 
+  const filters: { key: FilterKey; labelKey: string }[] = [
+    { key: "all", labelKey: "leads.filter.all" },
+    { key: "critical", labelKey: "leads.filter.critical" },
+    { key: "today", labelKey: "leads.filter.today" },
+    { key: "forgotten", labelKey: "leads.filter.forgotten" },
+  ];
+
+  const subtitle = isFiltering
+    ? t("leads.subtitle_showing", { showing: filtered.length, total: activeCount })
+    : activeCount === 0
+      ? t("leads.subtitle_count_zero")
+      : t("leads.subtitle_count", { count: activeCount });
+
   return (
     <View style={styles.container}>
-      <ScreenHeader
-        title={t("leads.title")}
-        subtitle={
-          isFiltering
-            ? t("leads.subtitle_showing", { showing: filtered.length, total: activeCount })
-            : activeCount === 0
-              ? t("leads.subtitle_count_zero")
-              : t("leads.subtitle_count", { count: activeCount })
-        }
-      />
+      <View style={styles.header}>
+        <Text style={styles.labelCaps}>{subtitle}</Text>
+        <Text style={styles.heroTitle} numberOfLines={1}>
+          {t("leads.title")}
+        </Text>
 
-      <View style={styles.controls}>
-        <Input
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t("leads.search_placeholder")}
-          icon="search-outline"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+        {/* Glass pill search */}
+        <GlassSurface variant="thin" radius={radius.pill} style={styles.searchWrap}>
+          <View style={styles.searchInner}>
+            <Ionicons name="search-outline" size={18} color={colors.textMuted} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t("leads.search_placeholder")}
+              placeholderTextColor={colors.textSubtle}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              style={[styles.searchInput, { color: colors.text }]}
+            />
+            {query.length > 0 ? (
+              <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={16} color={colors.textSubtle} />
+              </Pressable>
+            ) : null}
+          </View>
+        </GlassSurface>
+
+        {/* Glass / solid pill chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.chips}
+          contentContainerStyle={styles.chipsRow}
         >
-          {(["all", "critical", "today", "forgotten"] as FilterKey[]).map((k) => {
-            const active = filter === k;
+          {filters.map((f) => {
+            const active = filter === f.key;
+            const Wrapper = active ? View : GlassSurface;
             return (
               <Pressable
-                key={k}
-                onPress={() => onFilterPress(k)}
-                style={({ pressed }) => [
-                  styles.chip,
-                  active && styles.chipActive,
-                  pressed && { opacity: 0.8 },
-                ]}
+                key={f.key}
+                onPress={() => onFilterPress(f.key)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
+                style={({ pressed }) => [pressed && { opacity: 0.85 }]}
               >
-                <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
-                  {t(`leads.filter.${k}`)}
-                </Text>
+                <Wrapper
+                  variant="thin"
+                  radius={radius.pill}
+                  style={[styles.chip, active && styles.chipActive]}
+                >
+                  <Text
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.primaryText : colors.text },
+                    ]}
+                  >
+                    {t(f.labelKey)}
+                  </Text>
+                </Wrapper>
               </Pressable>
             );
           })}
         </ScrollView>
       </View>
 
-      {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
+      {error ? (
+        <View style={styles.errorWrap}>
+          <ErrorBanner message={error} onRetry={() => void load()} />
+        </View>
+      ) : null}
 
       {initialLoading ? (
         <View style={styles.skeletonStack}>
@@ -204,7 +243,7 @@ export default function LeadsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={colors.primary}
+              tintColor={colors.text}
             />
           }
           ListEmptyComponent={
@@ -225,18 +264,18 @@ export default function LeadsScreen() {
             ) : null
           }
           renderItem={({ item }) => (
-            <LeadCard
-              lead={item}
-              onPress={() =>
-                router.push({
-                  pathname: "/lead/[id]",
-                  // Hidrata o detalhe na hora pra evitar refetch de 200 leads. Veja lead/[id].tsx.
-                  params: { id: item.id, lead: JSON.stringify(item) },
-                })
-              }
-            />
+            <View style={styles.leadItem}>
+              <LeadCard
+                lead={item}
+                onPress={() =>
+                  router.push({
+                    pathname: "/lead/[id]",
+                    params: { id: item.id, lead: JSON.stringify(item) },
+                  })
+                }
+              />
+            </View>
           )}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         />
       )}
     </View>
@@ -245,43 +284,67 @@ export default function LeadsScreen() {
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg },
-    controls: {
-      paddingHorizontal: spacing.xl,
+    container: { flex: 1, backgroundColor: "transparent" },
+    header: {
+      paddingHorizontal: spacing["2xl"],
+      paddingTop: spacing["3xl"],
       gap: spacing.md,
+    },
+    labelCaps: {
+      ...typography.labelCaps,
+      color: c.textMuted,
+    },
+    heroTitle: {
+      ...typography.hDisplay,
+      color: c.text,
       marginBottom: spacing.md,
     },
-    chips: {
+    searchWrap: { marginBottom: spacing.xs },
+    searchInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      height: 48,
+    },
+    searchInput: {
+      flex: 1,
+      ...typography.body,
+      paddingVertical: 0,
+    },
+    chipsRow: {
       gap: spacing.sm,
       paddingVertical: spacing.xs,
+      paddingRight: spacing["2xl"],
     },
     chip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs + 2,
-      borderRadius: radius.pill,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.border,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
     },
     chipActive: {
       backgroundColor: c.primary,
-      borderColor: c.primary,
+      borderWidth: 0,
     },
     chipLabel: {
       ...typography.caption,
-      fontWeight: "600",
-      color: c.text,
+      fontFamily: fontFamily.semibold,
     },
-    chipLabelActive: {
-      color: c.primaryText,
+    errorWrap: {
+      paddingHorizontal: spacing["2xl"],
+      marginBottom: spacing.md,
     },
     skeletonStack: {
       gap: spacing.md,
-      paddingHorizontal: spacing.xl,
+      paddingHorizontal: spacing["2xl"],
+      marginTop: spacing.md,
     },
     list: {
-      padding: spacing.xl,
-      paddingBottom: spacing["4xl"],
+      paddingTop: spacing.md,
+      paddingBottom: spacing["6xl"],
+    },
+    leadItem: {
+      marginHorizontal: spacing["2xl"],
+      marginBottom: spacing.md,
     },
   });
 }
