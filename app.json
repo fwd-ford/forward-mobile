@@ -35,8 +35,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:18080",
-      "supabaseUrl": "https://ysewoopjgdpvnkfhffgy.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZXdvb3BqZ2Rwdm5rZmhmZmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMDg3OTUsImV4cCI6MjA5MTc4NDc5NX0.X1ZOlzHznQYN-fPlD_nWOzLL2ze9R7R7QCTD4e_jhJA"
     }
   }

@@ -3,9 +3,11 @@
 
 import Constants from "expo-constants";
 
+// app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Fly.
+// Esse fallback abaixo so cobre se alguem rodar sem app.config.js (build quebrada).
 const baseUrl =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
-  "http://localhost:18080";
+  "https://forward-api-java.fly.dev";
 
 export interface Problem {
   type: string;
