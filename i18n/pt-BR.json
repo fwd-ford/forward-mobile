@@ -79,6 +79,7 @@
   },
   "leads": {
     "title": "Leads",
+    "subtitle_count_zero": "Nenhum ativo",
     "subtitle_count_one": "{{count}} ativo",
     "subtitle_count_other": "{{count}} ativos",
     "subtitle_showing": "Mostrando {{showing}} de {{total}}",

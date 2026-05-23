@@ -144,7 +144,9 @@ export default function LeadsScreen() {
         subtitle={
           isFiltering
             ? t("leads.subtitle_showing", { showing: filtered.length, total: activeCount })
-            : t("leads.subtitle_count", { count: activeCount })
+            : activeCount === 0
+              ? t("leads.subtitle_count_zero")
+              : t("leads.subtitle_count", { count: activeCount })
         }
       />
 
