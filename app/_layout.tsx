@@ -1,3 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -27,6 +29,9 @@ function RootStack() {
   const [introDone, setIntroDone] = useState(false);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  // Preload Ionicons so the first paint never shows empty glyph squares (FOIT).
+  // Pre-carrega Ionicons; sem isso, primeiro paint mostra quadrados vazios.
+  const [fontsLoaded] = useFonts(Ionicons.font);
 
   // Auth check runs in parallel with the intro — whichever finishes later unblocks the router.
   // Verificacao de sessao roda em paralelo com a intro — o mais lento destrava o router.
@@ -46,7 +51,7 @@ function RootStack() {
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
       {!introDone ? (
         <IntroVideo onFinished={() => setIntroDone(true)} />
-      ) : !ready || !themeHydrated ? null : (
+      ) : !ready || !themeHydrated || !fontsLoaded ? null : (
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.bg },

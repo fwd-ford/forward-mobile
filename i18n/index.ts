@@ -16,11 +16,20 @@ import ptBR from "./pt-BR.json";
 /** Reads the device locale and maps it onto a supported Locale, defaulting to pt-BR. */
 export function detectDeviceLocale(): Locale {
   try {
-    const tag =
-      Platform.OS === "ios"
-        ? NativeModules.SettingsManager?.settings?.AppleLocale ??
-          NativeModules.SettingsManager?.settings?.AppleLanguages?.[0]
-        : NativeModules.I18nManager?.localeIdentifier;
+    // Web does not expose NativeModules; navigator.language is the canonical source.
+    // No web NativeModules nao existe; navigator.language e a fonte canonica.
+    let tag: string | undefined;
+    if (Platform.OS === "web") {
+      if (typeof navigator !== "undefined") {
+        tag = navigator.language ?? navigator.languages?.[0];
+      }
+    } else if (Platform.OS === "ios") {
+      tag =
+        NativeModules.SettingsManager?.settings?.AppleLocale ??
+        NativeModules.SettingsManager?.settings?.AppleLanguages?.[0];
+    } else {
+      tag = NativeModules.I18nManager?.localeIdentifier;
+    }
     if (typeof tag !== "string") return "pt-BR";
     const normalized = tag.replace("_", "-");
     if (isLocale(normalized)) return normalized;
