@@ -227,7 +227,13 @@ export default function LeadsScreen() {
           renderItem={({ item }) => (
             <LeadCard
               lead={item}
-              onPress={() => router.push({ pathname: "/lead/[id]", params: { id: item.id } })}
+              onPress={() =>
+                router.push({
+                  pathname: "/lead/[id]",
+                  // Hidrata o detalhe na hora pra evitar refetch de 200 leads. Veja lead/[id].tsx.
+                  params: { id: item.id, lead: JSON.stringify(item) },
+                })
+              }
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}

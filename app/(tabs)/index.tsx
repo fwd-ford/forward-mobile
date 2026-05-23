@@ -19,6 +19,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { useTheme } from "@/context/ThemeContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
+import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
 import { getAccessToken } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
@@ -47,18 +48,6 @@ function computeHeroStats(leads: Lead[]): HeroStats {
   const activeLeads = leads.filter((l) => ACTIVE_LEAD_STATUSES.has(l.status)).length;
   const pipelineBRL = leads.reduce((sum, l) => sum + (l.expected_value_brl ?? 0), 0);
   return { activeLeads, pipelineBRL };
-}
-
-function formatCompactBRL(value: number): string {
-  if (value >= 1000) {
-    const k = value / 1000;
-    return `R$ ${k.toFixed(k >= 10 ? 0 : 1)}k`;
-  }
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
 }
 
 export default function HomeScreen() {
@@ -147,7 +136,7 @@ export default function HomeScreen() {
             <View style={styles.heroDivider} />
             <View style={styles.heroCol}>
               <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
-              <Text style={styles.heroValue}>{formatCompactBRL(hero.pipelineBRL)}</Text>
+              <Text style={styles.heroValue}>{formatBRL(hero.pipelineBRL, { compact: true })}</Text>
             </View>
           </Card>
 
@@ -187,7 +176,13 @@ export default function HomeScreen() {
       renderItem={({ item }) => (
         <LeadCard
           lead={item}
-          onPress={() => router.push({ pathname: "/lead/[id]", params: { id: item.id } })}
+          onPress={() =>
+            router.push({
+              pathname: "/lead/[id]",
+              // Hidrata o detalhe na hora pra evitar refetch de 200 leads. Veja lead/[id].tsx.
+              params: { id: item.id, lead: JSON.stringify(item) },
+            })
+          }
         />
       )}
       ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}

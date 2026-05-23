@@ -2,7 +2,8 @@
   "app": { "name": "ForwardService" },
   "common": {
     "retry": "Try again",
-    "coming_soon": "Coming soon"
+    "coming_soon": "Coming soon",
+    "back": "Back"
   },
   "intro": { "skip": "Skip" },
   "auth": {
@@ -56,7 +57,18 @@
     "expected_value": "Expected value",
     "view_customer": "View customer",
     "call": "Call",
-    "message": "Send WhatsApp"
+    "message": "Send WhatsApp",
+    "section": {
+      "reason": "Why this lead",
+      "value": "Expected pipeline",
+      "created": "Created"
+    },
+    "actions": {
+      "call": "Call",
+      "message": "Message",
+      "mark_contacted": "Mark contacted"
+    },
+    "not_found": "Lead not found"
   },
   "leads": {
     "title": "Leads",

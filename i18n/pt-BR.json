@@ -4,7 +4,8 @@
   },
   "common": {
     "retry": "Tentar de novo",
-    "coming_soon": "Em breve"
+    "coming_soon": "Em breve",
+    "back": "Voltar"
   },
   "intro": {
     "skip": "Pular"
@@ -60,7 +61,18 @@
     "expected_value": "Valor esperado",
     "view_customer": "Ver cliente",
     "call": "Ligar",
-    "message": "Enviar WhatsApp"
+    "message": "Enviar WhatsApp",
+    "section": {
+      "reason": "Por que este lead",
+      "value": "Pipeline esperado",
+      "created": "Criado"
+    },
+    "actions": {
+      "call": "Ligar",
+      "message": "Mensagem",
+      "mark_contacted": "Marcar contato"
+    },
+    "not_found": "Lead não encontrado"
   },
   "leads": {
     "title": "Leads",
