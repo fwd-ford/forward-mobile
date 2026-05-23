@@ -4,8 +4,8 @@
 // Banner inline de erro: icon + mensagem + retry opcional.
 
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/context/ThemeContext";
@@ -14,7 +14,8 @@ import { haptic } from "@/lib/haptics";
 
 export interface ErrorBannerProps {
   message: string;
-  onRetry?: () => void;
+  /** Sync ou async. Quando async, o banner mostra spinner ate a promise resolver. */
+  onRetry?: () => void | Promise<void>;
   /** Override the default retry label. Pass an i18n key if you want a non-default label. */
   retryLabel?: string;
 }
@@ -23,6 +24,18 @@ export function ErrorBanner({ message, onRetry, retryLabel }: ErrorBannerProps) 
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    if (!onRetry || retrying) return;
+    haptic.light();
+    try {
+      setRetrying(true);
+      await onRetry();
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -32,16 +45,23 @@ export function ErrorBanner({ message, onRetry, retryLabel }: ErrorBannerProps) 
       </Text>
       {onRetry ? (
         <Pressable
-          onPress={() => {
-            haptic.light();
-            onRetry();
-          }}
+          onPress={handleRetry}
+          disabled={retrying}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={retryLabel ?? t("common.retry")}
-          style={({ pressed }) => [styles.retry, pressed && { opacity: 0.7 }]}
+          accessibilityState={{ busy: retrying, disabled: retrying }}
+          style={({ pressed }) => [
+            styles.retry,
+            pressed && !retrying && { opacity: 0.7 },
+            retrying && { opacity: 0.85 },
+          ]}
         >
-          <Text style={styles.retryLabel}>{retryLabel ?? t("common.retry")}</Text>
+          {retrying ? (
+            <ActivityIndicator size="small" color={colors.error} />
+          ) : (
+            <Text style={styles.retryLabel}>{retryLabel ?? t("common.retry")}</Text>
+          )}
         </Pressable>
       ) : null}
     </View>

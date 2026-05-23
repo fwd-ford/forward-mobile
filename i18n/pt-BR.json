@@ -26,12 +26,20 @@
     "profile": "Perfil"
   },
   "home": {
-    "greeting": "Ola",
+    "greeting_morning": "Bom dia, {{name}}",
+    "greeting_afternoon": "Boa tarde, {{name}}",
+    "greeting_evening": "Boa noite, {{name}}",
+    "today": "Hoje",
     "todays_leads": "Leads de hoje",
     "empty": "Nenhum lead no momento",
     "empty_title": "Sem leads por enquanto",
     "empty_description": "Quando novos leads forem atribuidos a voce, eles aparecem aqui.",
-    "error": "Falha ao carregar dados"
+    "error": "Falha ao carregar dados",
+    "hero": {
+      "active_leads": "Leads ativos",
+      "pipeline": "Pipeline"
+    },
+    "see_all_with_count": "Ver todos os {{count}} leads"
   },
   "loading": {
     "profile": "Carregando perfil"
