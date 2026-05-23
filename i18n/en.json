@@ -32,6 +32,7 @@
     "empty_title": "No leads yet",
     "empty_description": "When new leads are assigned to you, they will show up here.",
     "error": "Failed to load data",
+    "error_title": "Cannot reach the server",
     "hero": {
       "active_leads": "Active leads",
       "pipeline": "Pipeline"

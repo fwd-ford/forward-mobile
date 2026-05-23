@@ -36,6 +36,7 @@
     "empty_title": "Sem leads por enquanto",
     "empty_description": "Quando novos leads forem atribuidos a voce, eles aparecem aqui.",
     "error": "Falha ao carregar dados",
+    "error_title": "Sem conexao com o servidor",
     "hero": {
       "active_leads": "Leads ativos",
       "pipeline": "Pipeline"

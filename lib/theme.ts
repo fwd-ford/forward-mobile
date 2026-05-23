@@ -106,10 +106,15 @@ export const fontFamily = {
   semibold: "System",
   bold: "System",
   extrabold: "System",
+  // Web fallback list ordered for legibility on Windows/macOS/Linux: native
+  // monos first, then bundled-with-Windows Cascadia/Consolas. Bare "ui-monospace"
+  // collapsed to a chunky serif on Windows.
+  // Stack ordenada por sistema: Windows nao tem SF Mono, entao precisa de Cascadia/Consolas.
   mono: Platform.select({
     ios: "Menlo",
     android: "monospace",
-    default: "ui-monospace",
+    default:
+      'ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Consolas", "Liberation Mono", Menlo, monospace',
   }) as string,
 } as const;
 
