@@ -161,6 +161,8 @@ export default function HomeScreen() {
         !initialLoading && leads.length > TOP_VISIBLE ? (
           <Pressable
             onPress={() => router.push("/leads")}
+            accessibilityRole="button"
+            accessibilityLabel={t("home.see_all_with_count", { count: leads.length })}
             style={({ pressed }) => [styles.seeAll, pressed && { opacity: 0.7 }]}
           >
             <Text style={styles.seeAllLabel}>
