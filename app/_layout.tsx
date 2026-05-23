@@ -5,11 +5,22 @@ import { useEffect, useState } from "react";
 
 import "@/i18n";
 import { IntroVideo } from "@/components/ui/IntroVideo";
-import { colors } from "@/lib/theme";
+import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <RootStack />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function RootStack() {
+  const { colors, mode, isHydrated: themeHydrated } = useTheme();
   const [introDone, setIntroDone] = useState(false);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,14 +36,14 @@ export default function RootLayout() {
     return () => sub.data.subscription.unsubscribe();
   }, []);
 
-  useGuardedRedirect(ready && introDone, session);
+  useGuardedRedirect(ready && introDone && themeHydrated, session);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
+    <>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
       {!introDone ? (
         <IntroVideo onFinished={() => setIntroDone(true)} />
-      ) : !ready ? null : (
+      ) : !ready || !themeHydrated ? null : (
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.bg },
@@ -45,7 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="lead/[id]" options={{ title: "Lead" }} />
         </Stack>
       )}
-    </SafeAreaProvider>
+    </>
   );
 }
 
