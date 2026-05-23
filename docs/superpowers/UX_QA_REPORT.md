@@ -268,3 +268,113 @@ Estimo +30min de QA depois do backend up.
 ---
 
 **Conclusão geral:** o trabalho dos 16 commits + 6 PRs construiu uma fundação visual sólida e fiel ao Design DNA. Os agentes externos pegaram refinements importantes que eu não tinha visto. Esta QA visual encontrou **5 P0s reais** (4 dos quais NÃO foram pegos por nenhum reviewer anterior porque exigiam ver a tela renderizada) e **6 P1s** que separam um trabalho competente de um trabalho excelente. Total de 17 issues priorizadas, ~6-8h de trabalho pra fechar todas as P0+P1.
+
+---
+
+# Update: segunda rodada via Playwright MCP plugin
+
+**Data:** 2026-05-23 (mesma sessão, após pedido do Jota pra tentar de novo via plugin)
+**Método:** plugin MCP `mcp__plugin_playwright_playwright__*` em vez de Playwright npm. Permite snapshot accessibility-tree em vez de CSS selectors, e o login funcionou.
+**Telas adicionais capturadas:** Leads (light), Profile (light + dark), Lead detail (light, estado de erro).
+**Screenshots novos em:** `c:/Users/jotin/Documents/Ford/` (raiz do workspace, fora do repo):
+- `leads-light-pt.png`
+- `profile-light-pt.png`
+- `profile-dark-pt.png`
+- `lead-detail-light-pt.png`
+- `home-dark-pt.png`
+
+## Achados confirmados (passou pra evidência visual)
+
+### Leads
+- ScreenHeader "Leads" + subtitle "0 ativo" → **bug i18n plural**: deveria ser "0 ativos" (PT-BR trata 0 como plural). i18next plural rule não está configurada pra zero.
+- Input de busca renderiza corretamente, ícone search-outline visível.
+- 4 chips visíveis: Todos (active Ford Blue) / Críticos / Hoje / **Esquecidos 30d+** (rename do agente externo de `no_contact` → `forgotten` aparece visualmente, com label honesto).
+- ErrorBanner aparece imediatamente abaixo dos chips, mesmo problema do retry 110×28.
+- Espaço vazio massivo (~60% vertical) quando há erro.
+
+### Profile
+- User card consolidado funciona: avatar "?" placeholder (sem foto) + nome "Sem nome" + email + 2 PhotoButtons (Camera + Galeria, Remover não aparece pq não tem foto). Hierarquia limpa.
+- Avatar tem o badge câmera no bottom-right ✓
+- Seções "APARÊNCIA" / "IDIOMA" / "CONTA" em label uppercase, espaçamento consistente.
+- SettingRow do agente externo (extraído) está visualmente impecável — icon esquerda + label/value + slot direito.
+- **Cross-fade light → dark funcionou suave** ao tocar o Switch (theme context atua imediato).
+- **"Voltar a seguir o sistema"** link aparece em primary depois de override manual — feature do `isOverridden` funciona.
+
+### Lead detail
+- Quando navegado direto via URL com ID inexistente + backend offline: mostra ErrorBanner + **botão "Voltar"** (NOVO, agente externo adicionou — não estava no spec original; bom UX, evita dead-end).
+- Header da Stack "Lead" no topo.
+
+## Achados NOVOS desta rodada
+
+### P0-6 — Switch trackColor não respeita Ford Blue no web
+
+**Onde:** [`app/(tabs)/profile.tsx`](../../app/(tabs)/profile.tsx) — `<Switch trackColor={{ true: colors.primary }} />`
+
+**Sintoma:** o switch quando ON renderiza **teal/verde brilhante** em vez do Ford Blue Dark Mode (`#5B8DEF`). O código passa `trackColor` correto, mas `react-native-web` não honra completamente — usa o accent color default do browser.
+
+**Evidência:** `profile-dark-pt.png` — Switch verde claro, contrastando com tudo Ford Blue ao redor.
+
+**Impacto:** quebra a disciplina de cor do Design DNA exatamente no único lugar onde a cor primária seria mais reforçadora (single source of "ON" indication).
+
+**Fix proposto:**
+```tsx
+// Use accent CSS prop on web ou wrap com View que pinta a track via background:
+<Switch
+  value={mode === "dark"}
+  onValueChange={...}
+  // Force web by using a style prop wrapping
+  style={Platform.OS === "web" ? { accentColor: colors.primary } : undefined}
+  trackColor={{ false: colors.borderStrong, true: colors.primary }}
+  thumbColor="#FFFFFF"
+/>
+```
+Ou substituir por componente Switch custom (Pressable + Animated track) que tenha controle total visual.
+
+### P1-7 — "Modo claro / Modo escuro" label inverte semântica
+
+**Onde:** [`app/(tabs)/profile.tsx`](../../app/(tabs)/profile.tsx) SettingRow do tema
+
+**Sintoma:** o label mostra o **modo ATUAL** ("Modo claro" quando light, "Modo escuro" quando dark). Mas o switch é uma AÇÃO de toggle. Convenção do iOS Settings: label do row descreve o que o switch CONTROLA (ex: "Modo escuro" sempre, com switch indicando se ativo).
+
+Hoje fica confuso: "Modo claro" + switch OFF parece "desativando claro" (que ironicamente está certo, mas só por coincidência).
+
+**Fix proposto:** label fixo `t("profile.dark_mode")` (sempre "Modo escuro"), value descreve estado ("Manual" / "Acompanhando sistema") — que já tem.
+
+### P1-8 — i18next plural rule com count=0 retorna singular em PT-BR
+
+**Onde:** [`app/(tabs)/leads.tsx`](../../app/(tabs)/leads.tsx) — ScreenHeader subtitle
+
+**Sintoma:** "0 ativo" em vez de "0 ativos". PT-BR trata 0 como plural; i18next compatibilityJSON:v4 default usa CLDR que pode tratar 0 como `one` dependendo do locale.
+
+**Fix proposto:** simplificar adicionando ternário explícito:
+```ts
+subtitle={`${activeCount} ${activeCount === 1 ? "ativo" : "ativos"}`}
+```
+Ou usar i18next com `count_zero` key explícita.
+
+## Achados que se confirmaram (pas-mortem)
+
+- ✅ **P0-2 FOIT é transiente**: as primeiras renderizações pós-login mostram □ no lugar de ícones, mas após Ionicons.ttf carregar (~500-1500ms) tudo renderiza certo. Confirmado em `home-dark-pt.png` (icones todos visíveis depois que o app warmed up). Ainda assim P0-2 vale fix porque a primeira impressão importa.
+- ✅ **P0-3 ErrorBanner 110×28** confirmado em todas as 3 telas (Home, Leads, Lead detail). Mesmo bug, 3 ocorrências.
+- ✅ **P0-4 Mono fallback ruim no Windows web**: `0` e `R$ 0` no hero card renderizam num serif chunky. Confirmado em `home-dark-pt.png`.
+- ✅ **P0-5 Hero "0 / R$ 0" enganoso** sob erro: visível em `home-dark-pt.png`.
+- ✅ **`Sair` button como ghost mas em Ford Blue** (não error tone como spec): confirmado em ambos profile screenshots. Agente externo extraiu SettingRow mas não trocou variant.
+
+## Próxima rodada (recomendado se backend ficar up)
+
+Agora que o setup MCP plugin funciona, próxima rodada deve:
+1. Subir `forward-api-java` local (`./mvnw spring-boot:run`) com Supabase test user válido
+2. Re-rodar QA capturando: LeadCard real (stripe + chip + mono + dot), hero com KPIs verdadeiros, lead detail com badges palette corretas, footer fixo das 3 ações com toast.
+3. Validar animação de cross-fade do tema (frame-by-frame screenshot durante toggle)
+4. Validar transição entre tabs (capturar mid-animation)
+5. Forçar locale EN via override no Profile (LocalePicker) — confirmar todos os textos novos traduzidos
+
+Pode usar o mesmo padrão MCP plugin: navigate → snapshot → click → screenshot. Funciona bem.
+
+## Sumário do delta desta rodada
+
+- **+2 P0s** descobertos: Switch web não respeita trackColor (P0-6).
+- **+2 P1s** descobertos: label "Modo claro/escuro" semântica (P1-7), plural com zero (P1-8).
+- **+1 positivo:** agente externo adicionou "Voltar" no estado erro do Lead detail — não estava planejado, mas é bom UX.
+
+Total agora: **6 P0 + 8 P1 + 6 P2 = 20 issues priorizadas**. Estimo ~7-10h pra fechar P0+P1.
