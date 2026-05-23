@@ -90,12 +90,15 @@ function createStyles(c: ThemeColors) {
       fontWeight: "600",
     },
     retry: {
-      paddingVertical: spacing.xs,
-      paddingHorizontal: spacing.sm,
+      minHeight: 44,
+      paddingVertical: spacing.sm + 2,
+      paddingHorizontal: spacing.md,
       borderRadius: radius.sm,
       backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.error,
+      alignItems: "center",
+      justifyContent: "center",
     },
     retryLabel: {
       ...typography.caption,
