@@ -2,7 +2,8 @@
   "app": { "name": "ForwardService" },
   "common": {
     "retry": "Try again",
-    "coming_soon": "Coming soon"
+    "coming_soon": "Coming soon",
+    "back": "Back"
   },
   "intro": { "skip": "Skip" },
   "auth": {

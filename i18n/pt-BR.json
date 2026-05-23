@@ -4,7 +4,8 @@
   },
   "common": {
     "retry": "Tentar de novo",
-    "coming_soon": "Em breve"
+    "coming_soon": "Em breve",
+    "back": "Voltar"
   },
   "intro": {
     "skip": "Pular"
