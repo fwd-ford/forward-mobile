@@ -1,7 +1,7 @@
-// FooterAction: botao primario de footer fixo. Usado na tela de detalhe do
-// lead pra agrupar 3 acoes lado a lado (Ligar, Mensagem, Marcar contato).
-// Quando `disabled`, renderiza badge "Em breve" abaixo do label e bloqueia
-// onPress + haptic, sem fingir que a acao acontece.
+// FooterAction: pressable column for the fixed glass footer in lead detail.
+// Three of these sit side-by-side (Ligar / Mensagem / Marcar contato).
+// When `disabled`, renders a small "Em breve" hint and blocks onPress, so we
+// never lie about what works.
 
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo } from "react";
@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/context/ThemeContext";
-import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 export interface FooterActionProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -37,14 +37,17 @@ export function FooterAction({
       disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
-        disabled && styles.btnDisabled,
         pressed && !disabled && { opacity: 0.7 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
     >
-      <Ionicons name={icon} size={20} color={disabled ? colors.textSubtle : colors.primary} />
+      <Ionicons
+        name={icon}
+        size={22}
+        color={disabled ? colors.textSubtle : colors.text}
+      />
       <Text
         style={[styles.label, disabled && { color: colors.textSubtle }]}
         numberOfLines={1}
@@ -70,25 +73,21 @@ function createStyles(c: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
       gap: spacing.xs,
-      backgroundColor: c.primarySoft,
-    },
-    btnDisabled: {
-      backgroundColor: c.surfaceElevated,
-      opacity: 0.7,
+      backgroundColor: "transparent",
     },
     label: {
       ...typography.caption,
-      fontWeight: "700",
-      color: c.primary,
+      fontFamily: fontFamily.semibold,
+      color: c.text,
     },
     hint: {
       marginTop: 2,
-      paddingHorizontal: spacing.xs,
+      paddingHorizontal: spacing.sm,
       paddingVertical: 1,
       borderRadius: radius.sm,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.border,
+      backgroundColor: c.glassBase,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.glassBorder,
     },
     hintLabel: {
       ...typography.label,
