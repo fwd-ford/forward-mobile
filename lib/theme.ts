@@ -1,28 +1,39 @@
-// Design tokens for the ForwardService mobile app.
-// Two palettes (light + dark) keyed by semantic tokens. Screens consume via
-// useTheme() — never import `palette` directly.
-// Tokens de design: paletas light/dark, espacamento, tipografia, elevacao.
+// Design tokens for the ForwardService mobile app — Glass Minimalist redesign.
+// Light + dark palettes keyed by semantic tokens. Screens consume via useTheme().
+// Spec: docs/superpowers/specs/2026-05-23-glass-minimalist-design.md
+//
+// Tokens de design: paletas light/dark, glass, tipografia Fraunces+Inter.
 
 import { Platform } from "react-native";
 
 export type ThemeMode = "light" | "dark";
 
 export type ThemeColors = {
+  // Base surfaces
   bg: string;
+  bgDeep: string;
   bgElevated: string;
   surface: string;
   surfaceElevated: string;
   surfaceHover: string;
+  // Glass (new): semi-transparent, paired with backdrop-blur at the consumer.
+  glassBase: string;
+  glassBorder: string;
+  // Borders + separators
   border: string;
   borderStrong: string;
   separator: string;
+  // Text
   text: string;
   textMuted: string;
   textSubtle: string;
+  // Primary CTA — white pill in dark, dark pill in light (TIDE-style).
+  // Brand fordBlue is exported separately and used ONLY in the wordmark.
   primary: string;
   primaryDeep: string;
   primaryText: string;
   primarySoft: string;
+  // Status / semantic
   success: string;
   successSoft: string;
   warning: string;
@@ -30,36 +41,38 @@ export type ThemeColors = {
   error: string;
   errorSoft: string;
   critical: string;
+  // Misc
   overlay: string;
   tabBar: string;
   inputBg: string;
 };
 
-// Ford Blue is the brand primary. Light uses the classic deep blue; dark uses
-// a lighter, more saturated variant for legibility on dark backgrounds.
-// Azul Ford classico (#003478) no light; variante mais clara no dark.
+// Ford Blue is the brand mark. Used ONLY on the FORD wordmark + logo glyph.
+// Never on CTAs, switches, tabs, or any interactive surface.
+// Azul Ford apenas no wordmark/logo. Nunca em UI interativa.
 export const FORD_BLUE = "#003478";
 export const FORD_BLUE_DEEP = "#002356";
-export const FORD_BLUE_DARK_MODE = "#5B8DEF";
-export const FORD_BLUE_DARK_MODE_DEEP = "#3D6FCC";
 
 export const palette: Record<ThemeMode, ThemeColors> = {
   light: {
-    bg: "#F7F8FA",
+    bg: "#FAFAFA",
+    bgDeep: "#F0F0F2",
     bgElevated: "#FFFFFF",
     surface: "#FFFFFF",
     surfaceElevated: "#FFFFFF",
-    surfaceHover: "#F1F3F7",
-    border: "rgba(11, 18, 32, 0.08)",
-    borderStrong: "rgba(11, 18, 32, 0.14)",
-    separator: "rgba(11, 18, 32, 0.05)",
-    text: "#0B1220",
-    textMuted: "#56627A",
-    textSubtle: "#8E97AC",
-    primary: FORD_BLUE,
-    primaryDeep: FORD_BLUE_DEEP,
-    primaryText: "#FFFFFF",
-    primarySoft: "rgba(0, 52, 120, 0.10)",
+    surfaceHover: "#F4F4F6",
+    glassBase: "rgba(255, 255, 255, 0.65)",
+    glassBorder: "rgba(0, 0, 0, 0.06)",
+    border: "rgba(0, 0, 0, 0.08)",
+    borderStrong: "rgba(0, 0, 0, 0.14)",
+    separator: "rgba(0, 0, 0, 0.05)",
+    text: "#1A1A1A",
+    textMuted: "#6B7280",
+    textSubtle: "#9CA3AF",
+    primary: "#1A1A1A",
+    primaryDeep: "#000000",
+    primaryText: "#FAFAFA",
+    primarySoft: "rgba(26, 26, 26, 0.06)",
     success: "#0F8A5F",
     successSoft: "rgba(15, 138, 95, 0.10)",
     warning: "#B5670A",
@@ -68,48 +81,56 @@ export const palette: Record<ThemeMode, ThemeColors> = {
     errorSoft: "rgba(199, 54, 58, 0.10)",
     critical: "#A11A20",
     overlay: "rgba(11, 18, 32, 0.40)",
-    tabBar: "rgba(255, 255, 255, 0.92)",
-    inputBg: "#FFFFFF",
+    tabBar: "rgba(255, 255, 255, 0.78)",
+    inputBg: "rgba(255, 255, 255, 0.60)",
   },
   dark: {
-    bg: "#0B1220",
-    bgElevated: "#101A2E",
-    surface: "#121A2B",
-    surfaceElevated: "#1A2336",
-    surfaceHover: "#1F2A40",
+    bg: "#1E1E1E",
+    bgDeep: "#161616",
+    bgElevated: "#252525",
+    surface: "#252525",
+    surfaceElevated: "#2A2A2A",
+    surfaceHover: "#303030",
+    glassBase: "rgba(40, 40, 40, 0.55)",
+    glassBorder: "rgba(255, 255, 255, 0.08)",
     border: "rgba(255, 255, 255, 0.07)",
     borderStrong: "rgba(255, 255, 255, 0.12)",
-    separator: "rgba(255, 255, 255, 0.05)",
-    text: "#E6EDF7",
-    textMuted: "#93A1B8",
-    textSubtle: "#6C7A95",
-    primary: FORD_BLUE_DARK_MODE,
-    primaryDeep: FORD_BLUE_DARK_MODE_DEEP,
-    primaryText: "#FFFFFF",
-    primarySoft: "rgba(91, 141, 239, 0.16)",
+    separator: "rgba(255, 255, 255, 0.06)",
+    text: "#F5F5F5",
+    textMuted: "#9CA3AF",
+    textSubtle: "#6B7280",
+    primary: "#FAFAFA",
+    primaryDeep: "#E5E5E5",
+    primaryText: "#1A1A1A",
+    primarySoft: "rgba(250, 250, 250, 0.10)",
     success: "#2DB67B",
     successSoft: "rgba(45, 182, 123, 0.16)",
     warning: "#E3A93C",
     warningSoft: "rgba(227, 169, 60, 0.16)",
     error: "#E5484D",
     errorSoft: "rgba(229, 72, 77, 0.16)",
-    critical: "#FF5463",
+    critical: "#FF453A",
     overlay: "rgba(0, 0, 0, 0.6)",
-    tabBar: "rgba(11, 18, 32, 0.85)",
-    inputBg: "#121A2B",
+    tabBar: "rgba(30, 30, 30, 0.72)",
+    inputBg: "rgba(40, 40, 40, 0.55)",
   },
 };
 
+// Font families — Fraunces (display serif) + Inter (sans body) loaded via
+// expo-google-fonts in _layout.tsx. Names below match the package exports.
+// Mono uses system stack (no bundle), with proper Windows fallback.
+// Fontes: Fraunces + Inter via @expo-google-fonts; mono fica em system stack.
 export const fontFamily = {
-  regular: "System",
-  medium: "System",
-  semibold: "System",
-  bold: "System",
-  extrabold: "System",
-  // Web fallback list ordered for legibility on Windows/macOS/Linux: native
-  // monos first, then bundled-with-Windows Cascadia/Consolas. Bare "ui-monospace"
-  // collapsed to a chunky serif on Windows.
-  // Stack ordenada por sistema: Windows nao tem SF Mono, entao precisa de Cascadia/Consolas.
+  // Display serif (Fraunces) — for h-display + h-section.
+  displayRegular: "Fraunces_400Regular",
+  displaySemibold: "Fraunces_600SemiBold",
+  displayBold: "Fraunces_700Bold",
+  // Sans body (Inter) — for body, captions, labels, mono fallback.
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semibold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+  // Mono stack (system).
   mono: Platform.select({
     ios: "Menlo",
     android: "monospace",
@@ -118,9 +139,9 @@ export const fontFamily = {
   }) as string,
 } as const;
 
-// Weight tokens — paired with fontFamily.System on RN to get bold variants
-// without bundling custom fonts. When we ship Manrope/Inter later, swap families.
-// Pesos: enquanto nao ha fonte custom, usa system + fontWeight numerico.
+// Numeric weights kept for any caller that still spreads typography helpers.
+// React Native maps these to the loaded font weights automatically when the
+// fontFamily explicitly carries the weight (e.g. Inter_600SemiBold).
 export const fontWeight = {
   regular: "400",
   medium: "500",
@@ -139,8 +160,8 @@ export const fontSize = {
   "2xl": 22,
   "3xl": 28,
   "4xl": 32,
-  "5xl": 48,
-  "6xl": 72,
+  "5xl": 40,
+  "6xl": 56,
 } as const;
 
 export const spacing = {
@@ -176,8 +197,9 @@ export const letterSpacing = {
   ultra: 6,
 } as const;
 
-// Elevation pra light: sombras reais (iOS shadow* + Android elevation).
-// Hierarquia visual depende da luz vinda de cima.
+// Elevation light: real shadows. Elevation dark: subtle top-highlight only
+// (shadows on dark turn into smudges; Vercel/Cursor pattern).
+// Glass surfaces dont use either — they get a thin border via glassBorder.
 export const elevationLight = {
   none: {
     shadowColor: "transparent",
@@ -208,7 +230,7 @@ export const elevationLight = {
     elevation: 4,
   },
   primary: {
-    shadowColor: FORD_BLUE,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 12,
@@ -216,8 +238,6 @@ export const elevationLight = {
   },
 } as const;
 
-// Elevation pra dark: zero sombra. Hierarquia via top-highlight (borda superior
-// clarinha). Estetica Vercel/Cursor — sombras em fundo escuro viram manchas.
 export const elevationDark = {
   none: {},
   sm: { borderTopColor: "rgba(255,255,255,0.04)", borderTopWidth: 1 },
@@ -226,9 +246,6 @@ export const elevationDark = {
   primary: { borderTopColor: "rgba(255,255,255,0.10)", borderTopWidth: 1 },
 } as const;
 
-// Semantic elevation aliases — usar nas telas em vez de sm/md/lg/primary direto.
-// Card = elemento normal. Sheet = modal/bottom-sheet. Popover = floating action.
-// Aliases semanticos: card / sheet / popover.
 export const elevationAliasLight = {
   card: elevationLight.sm,
   sheet: elevationLight.lg,
@@ -243,27 +260,74 @@ export const elevationAliasDark = {
 
 export type Elevation = typeof elevationLight | typeof elevationDark;
 
-// Typography helpers que combinam size + weight + lineHeight em um objeto
-// pronto pra spread. Substitui o `typography.h1` antigo, agora tema-aware
-// no consumer (cor vem de useTheme()).
-// Helpers de tipografia: spread direto no style.
+// Typography helpers — Fraunces for display, Inter for everything else.
+// Spread directly into a Text style. Color comes from useTheme() at the
+// consumer (these helpers are color-agnostic).
+//
+// Display = page titles, section titles. Heavy serif presence.
+// Body / caption / label = all Inter for UI consistency.
+// Tipografia: Fraunces no display, Inter no resto. Cor vem do consumer.
 export const typography = {
-  h1: {
+  // Display — Fraunces serif.
+  hDisplay: {
+    fontFamily: fontFamily.displayBold,
+    fontSize: fontSize["5xl"],
+    lineHeight: 44,
+    letterSpacing: -1.2,
+  },
+  hSection: {
+    fontFamily: fontFamily.displaySemibold,
     fontSize: fontSize["3xl"],
-    fontWeight: fontWeight.extrabold,
-    lineHeight: 34,
-    letterSpacing: -0.4,
+    lineHeight: 32,
+    letterSpacing: -0.8,
+  },
+  // Legacy aliases (h1/h2) so screens not yet migrated keep working.
+  // Aliases legados pra telas ainda nao migradas.
+  h1: {
+    fontFamily: fontFamily.displayBold,
+    fontSize: fontSize["5xl"],
+    lineHeight: 44,
+    letterSpacing: -1.2,
   },
   h2: {
-    fontSize: fontSize["2xl"],
-    fontWeight: fontWeight.bold,
-    lineHeight: 28,
-    letterSpacing: -0.3,
+    fontFamily: fontFamily.displaySemibold,
+    fontSize: fontSize["3xl"],
+    lineHeight: 32,
+    letterSpacing: -0.8,
   },
-  h3: { fontSize: fontSize.xl, fontWeight: fontWeight.semibold, lineHeight: 24 },
-  body: { fontSize: fontSize.lg, fontWeight: fontWeight.regular, lineHeight: 22 },
-  caption: { fontSize: fontSize.md, fontWeight: fontWeight.regular, lineHeight: 18 },
-  label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, letterSpacing: 0.5 },
+  // Body — Inter sans.
+  h3: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.xl,
+    lineHeight: 24,
+  },
+  bodyLg: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.lg + 1,
+    lineHeight: 24,
+  },
+  body: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.lg,
+    lineHeight: 22,
+  },
+  caption: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.md,
+    lineHeight: 18,
+  },
+  label: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.sm,
+    letterSpacing: 0.5,
+  },
+  // Mailchimp-style uppercase tag.
+  labelCaps: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.sm,
+    letterSpacing: 1.4,
+    textTransform: "uppercase" as const,
+  },
   mono: {
     fontFamily: fontFamily.mono,
     fontSize: fontSize.lg,
@@ -334,7 +398,6 @@ export const leadStatusPalette: Record<LeadStatusKey, StatusPaletteEntry> = {
   },
 };
 
-// Priority palette: mapeia api Lead.priority. Critical chama atencao maxima.
 export type LeadPriorityKey = "low" | "medium" | "high" | "critical";
 
 export const leadPriorityPalette: Record<LeadPriorityKey, StatusPaletteEntry> = {
@@ -352,19 +415,18 @@ export const leadPriorityPalette: Record<LeadPriorityKey, StatusPaletteEntry> = 
   },
   high: {
     labelKey: "priority.high",
-    color: FORD_BLUE_DARK_MODE,
+    color: "#5B8DEF",
     bg: "rgba(91, 141, 239, 0.16)",
     border: "rgba(91, 141, 239, 0.45)",
   },
   critical: {
     labelKey: "priority.critical",
-    color: "#FF5463",
-    bg: "rgba(255, 84, 99, 0.16)",
-    border: "rgba(255, 84, 99, 0.50)",
+    color: "#FF453A",
+    bg: "rgba(255, 69, 58, 0.16)",
+    border: "rgba(255, 69, 58, 0.50)",
   },
 };
 
-// Churn segment palette: mapeia segment do ChurnScore.
 export type ChurnSegmentKey = "fiel" | "abandono" | "esquecido" | "economico";
 
 export const churnSegmentPalette: Record<ChurnSegmentKey, StatusPaletteEntry> = {
@@ -376,9 +438,9 @@ export const churnSegmentPalette: Record<ChurnSegmentKey, StatusPaletteEntry> = 
   },
   abandono: {
     labelKey: "segment.abandono",
-    color: "#FF5463",
-    bg: "rgba(255, 84, 99, 0.14)",
-    border: "rgba(255, 84, 99, 0.40)",
+    color: "#FF453A",
+    bg: "rgba(255, 69, 58, 0.14)",
+    border: "rgba(255, 69, 58, 0.40)",
   },
   esquecido: {
     labelKey: "segment.esquecido",
@@ -394,9 +456,9 @@ export const churnSegmentPalette: Record<ChurnSegmentKey, StatusPaletteEntry> = 
   },
 };
 
-// Tokens legados — mantidos para callers ainda nao migrados. Vao sumir
-// conforme as telas adotam useTheme(). NAO usar em codigo novo.
-// Legacy tokens: nao usar em codigo novo. Migrar para useTheme().
+// Legacy color export — kept so any code path still importing from this module
+// instead of useTheme() does not break. Migrate consumers to useTheme().
+// Tokens legados: nao usar em codigo novo. Migrar para useTheme().
 export const colors = palette.dark;
 export type ColorToken = keyof ThemeColors;
 export type SpacingToken = keyof typeof spacing;
