@@ -52,6 +52,10 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // react-navigation/bottom-tabs v7 paints the scene container white by
+        // default; without this the mesh background gets covered inside tabs.
+        // sceneStyle no v7 substituiu sceneContainerStyle do v6.
+        sceneStyle: { backgroundColor: "transparent" },
         tabBarStyle: {
           position: "absolute",
           left: 0,
