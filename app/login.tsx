@@ -1,5 +1,13 @@
+// Login — Glass Minimalist redesign (Fase 2, screen 1/6).
+// Inputs are intentionally inline (not the shared Input component) per the
+// "screen-by-screen first, componentize later" workflow. Same goes for the
+// CTA — bare Pressable pill instead of the shared Button.
+//
+// Login redesenhado: inputs underline + pill CTA inline (sem componentes).
+
 import { useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
   Platform,
@@ -7,21 +15,20 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
 import { useFadeIn } from "@/hooks/useFadeIn";
 import { useShake } from "@/hooks/useShake";
 import { signInWithEmail } from "@/lib/auth";
 import { haptic } from "@/lib/haptics";
-import { fontWeight, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 import {
   validateEmail,
   validatePassword,
@@ -50,8 +57,6 @@ export default function LoginScreen() {
   const { translateX, shake } = useShake();
   const { opacity, translateY } = useFadeIn(360);
 
-  // Scale-in for the header — sits on top of the fade. Subtle (0.96 -> 1).
-  // Scale leve junto do fade pra entrada mais viva.
   const scale = useRef(new Animated.Value(0.96)).current;
   useMemo(() => {
     Animated.spring(scale, {
@@ -65,6 +70,8 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -118,7 +125,7 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + spacing["4xl"], paddingBottom: insets.bottom + spacing["2xl"] },
+          { paddingTop: insets.top + spacing["5xl"], paddingBottom: insets.bottom + spacing["3xl"] },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -130,38 +137,41 @@ export default function LoginScreen() {
           ]}
         >
           <Text style={styles.brand}>FORD</Text>
-          <Text style={styles.title}>{t("app.name")}</Text>
-          <Text style={styles.subtitle}>{t("auth.subtitle")}</Text>
+          <Text style={styles.tagline}>{t("auth.subtitle")}</Text>
         </Animated.View>
 
-        <View style={styles.form}>
-          <Input
+        <Animated.View style={[styles.form, { transform: [{ translateX }] }]}>
+          <UnderlineInput
+            colors={colors}
             label={t("auth.email")}
-            placeholder={t("auth.email_placeholder")}
-            icon="mail-outline"
             value={email}
             onChangeText={setEmail}
+            placeholder={t("auth.email_placeholder")}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
-            shakeAnim={translateX}
+            focused={emailFocused}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
             error={
               visibleErrors.email
                 ? t(visibleErrors.email.key, visibleErrors.email.vars)
                 : undefined
             }
           />
-          <Input
+          <UnderlineInput
+            colors={colors}
             label={t("auth.password")}
-            placeholder="••••••"
-            icon="lock-closed-outline"
             value={password}
             onChangeText={setPassword}
+            placeholder="••••••"
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
-            shakeAnim={translateX}
+            focused={passwordFocused}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
             error={
               visibleErrors.password
                 ? t(visibleErrors.password.key, visibleErrors.password.vars)
@@ -170,30 +180,42 @@ export default function LoginScreen() {
           />
 
           {serverError ? (
-            <View style={styles.serverErrorBox}>
-              <Text style={styles.serverErrorText}>{serverError}</Text>
-            </View>
+            <Text style={styles.serverErrorText}>{serverError}</Text>
           ) : null}
+        </Animated.View>
 
-          <Button
-            label={t("auth.sign_in")}
-            loadingLabel={t("auth.signing_in")}
-            loading={loading}
-            disabled={buttonDisabled}
+        <View style={styles.footer}>
+          <Pressable
             onPress={onSubmit}
-            style={styles.submit}
-          />
-        </View>
+            disabled={buttonDisabled || loading}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: buttonDisabled || loading, busy: loading }}
+            style={({ pressed }) => [
+              styles.pillCTA,
+              (buttonDisabled || loading) && styles.pillCTADisabled,
+              pressed && styles.pillCTAPressed,
+            ]}
+          >
+            {loading ? (
+              <View style={styles.pillCTALoading}>
+                <ActivityIndicator color={colors.primaryText} />
+                <Text style={styles.pillCTALabel}>{t("auth.signing_in")}</Text>
+              </View>
+            ) : (
+              <Text style={styles.pillCTALabel}>{t("auth.sign_in")}</Text>
+            )}
+          </Pressable>
 
-        <Pressable
-          onPress={onForgotPassword}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel={t("auth.forgot_password")}
-          style={({ pressed }) => [styles.forgotWrap, pressed && { opacity: 0.6 }]}
-        >
-          <Text style={styles.forgotLabel}>{t("auth.forgot_password")}</Text>
-        </Pressable>
+          <Pressable
+            onPress={onForgotPassword}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t("auth.forgot_password")}
+            style={({ pressed }) => [styles.forgotWrap, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.forgotLabel}>{t("auth.forgot_password")}</Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
       <Toast
@@ -206,59 +228,143 @@ export default function LoginScreen() {
   );
 }
 
+// Inline minimal underline input. Lives here for now per the screen-by-screen
+// workflow; gets extracted to a shared <UnderlineInput> in Phase 3.
+type UnderlineInputProps = {
+  colors: ThemeColors;
+  label: string;
+  value: string;
+  onChangeText: (s: string) => void;
+  placeholder?: string;
+  focused: boolean;
+  onFocus: () => void;
+  onBlur: () => void;
+  error?: string;
+  secureTextEntry?: boolean;
+  keyboardType?: "default" | "email-address";
+  autoCapitalize?: "none" | "sentences";
+  autoCorrect?: boolean;
+  autoComplete?: "email" | "password";
+};
+
+function UnderlineInput({
+  colors,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  focused,
+  onFocus,
+  onBlur,
+  error,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  autoComplete,
+}: UnderlineInputProps) {
+  const lineColor = error ? colors.error : focused ? colors.text : colors.border;
+  return (
+    <View style={inputStyles.wrap}>
+      <Text style={[inputStyles.label, { color: colors.textMuted }]}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textSubtle}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        autoComplete={autoComplete}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        style={[
+          inputStyles.input,
+          { color: colors.text, borderBottomColor: lineColor },
+        ]}
+      />
+      {error ? (
+        <Text style={[inputStyles.error, { color: colors.error }]}>{error}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+const inputStyles = StyleSheet.create({
+  wrap: { marginBottom: spacing.xl },
+  label: {
+    ...typography.labelCaps,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    ...typography.bodyLg,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth + 0.5,
+  },
+  error: {
+    ...typography.caption,
+    marginTop: spacing.xs,
+  },
+});
+
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg },
+    // Transparent so the MeshBackground at the root shows through.
+    container: { flex: 1, backgroundColor: "transparent" },
     scroll: {
       flexGrow: 1,
-      paddingHorizontal: spacing.xl,
-      justifyContent: "center",
+      paddingHorizontal: spacing["2xl"],
+      justifyContent: "space-between",
     },
     header: {
-      alignItems: "center",
-      marginBottom: spacing["2xl"],
-      gap: spacing.xs,
+      alignItems: "flex-start",
+      marginBottom: spacing["4xl"],
+      gap: spacing.lg,
     },
     brand: {
-      fontSize: 40,
-      fontWeight: fontWeight.extrabold,
-      letterSpacing: 6,
-      color: c.primary,
-      marginBottom: spacing.md,
+      fontFamily: fontFamily.bold,
+      fontSize: 72,
+      letterSpacing: 8,
+      color: c.text,
+      lineHeight: 72,
     },
-    title: { ...typography.h1, color: c.text },
-    subtitle: {
-      ...typography.body,
+    tagline: {
+      ...typography.bodyLg,
       color: c.textMuted,
-      textAlign: "center",
-      paddingHorizontal: spacing.lg,
+      maxWidth: 320,
     },
     form: { width: "100%" },
-    serverErrorBox: {
-      borderWidth: 1,
-      borderColor: c.error,
-      backgroundColor: c.errorSoft,
-      borderRadius: radius.md,
-      padding: spacing.md,
-      marginTop: spacing.xs,
-      marginBottom: spacing.md,
-    },
     serverErrorText: {
       ...typography.caption,
-      fontWeight: "600",
       color: c.error,
-      textAlign: "center",
+      marginTop: spacing.sm,
     },
-    submit: { marginTop: spacing.md },
+    footer: { gap: spacing.sm, marginTop: spacing["3xl"] },
+    pillCTA: {
+      height: 56,
+      borderRadius: radius.pill,
+      backgroundColor: c.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
+    },
+    pillCTADisabled: { opacity: 0.45 },
+    pillCTAPressed: { opacity: 0.92, transform: [{ scale: 0.98 }] },
+    pillCTALoading: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+    pillCTALabel: {
+      ...typography.bodyLg,
+      fontFamily: fontFamily.semibold,
+      color: c.primaryText,
+    },
     forgotWrap: {
       alignItems: "center",
       paddingVertical: spacing.lg,
-      marginTop: spacing.md,
     },
     forgotLabel: {
       ...typography.caption,
-      color: c.primary,
-      fontWeight: "600",
+      fontFamily: fontFamily.medium,
+      color: c.textMuted,
     },
   });
 }
