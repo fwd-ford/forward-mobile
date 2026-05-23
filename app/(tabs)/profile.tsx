@@ -18,6 +18,7 @@ import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { LocalePicker } from "@/components/ui/LocalePicker";
 import { PhotoButton } from "@/components/ui/PhotoButton";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useLocale } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -56,10 +57,7 @@ export default function ProfileScreen() {
         supabase.auth.getUser(),
         fetchMyProfile().catch(() => null),
       ]);
-      setState({
-        email: authRes.data.user?.email ?? null,
-        profile,
-      });
+      setState({ email: authRes.data.user?.email ?? null, profile });
     })();
   }, []);
 
@@ -118,125 +116,106 @@ export default function ProfileScreen() {
     router.replace("/login");
   }
 
-  function onToggleTheme() {
-    haptic.selection();
-    toggleTheme();
-  }
-
-  function onResetToSystem() {
-    haptic.light();
-    resetToSystem();
-  }
-
-  function onOpenLocalePicker() {
-    haptic.light();
-    setLocalePickerOpen(true);
-  }
-
-  if (!state) {
-    return <LoadingScreen label={t("loading.profile")} />;
-  }
+  if (!state) return <LoadingScreen label={t("loading.profile")} />;
 
   const { email, profile } = state;
   const displayName = profile?.full_name ?? t("profile.unnamed");
   const avatarSource = profile?.full_name ?? email ?? "?";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing["4xl"] },
+          { paddingBottom: insets.bottom + spacing["4xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>{t("tabs.profile")}</Text>
-        </View>
+        <ScreenHeader title={t("tabs.profile")} />
 
+        {/* User card: avatar + name + email + photo actions all in one block */}
+        {/* Card do usuario: avatar + identidade + acoes de foto numa secao so */}
         <View style={styles.userCard}>
-          <Pressable
-            onPress={onPickFromLibrary}
-            disabled={uploadingPhoto}
-            style={({ pressed }) => [styles.avatarPressable, pressed && styles.pressedSoft]}
-            accessibilityRole="button"
-            accessibilityLabel={t("profile.change_photo")}
-          >
-            <ProfileAvatar uri={profile?.avatar_url} source={avatarSource} size={64} />
-            <View style={styles.avatarBadge}>
-              {uploadingPhoto ? (
-                <ActivityIndicator size="small" color={colors.primaryText} />
-              ) : (
-                <Ionicons name="camera" size={12} color={colors.primaryText} />
-              )}
-            </View>
-          </Pressable>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {displayName}
-            </Text>
-            <Text style={styles.userEmail} numberOfLines={1}>
-              {email ?? "—"}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>{t("profile.photo")}</Text>
-        <View style={styles.photoButtonsRow}>
-          <PhotoButton
-            icon="camera-outline"
-            label={t("profile.camera")}
-            onPress={onPickFromCamera}
-            disabled={uploadingPhoto}
-          />
-          <PhotoButton
-            icon="images-outline"
-            label={t("profile.gallery")}
-            onPress={onPickFromLibrary}
-            disabled={uploadingPhoto}
-          />
-          {profile?.avatar_url ? (
-            <PhotoButton
-              icon="trash-outline"
-              label={t("profile.remove")}
-              onPress={onRemovePhoto}
+          <View style={styles.userTop}>
+            <Pressable
+              onPress={onPickFromLibrary}
               disabled={uploadingPhoto}
-              destructive
+              style={({ pressed }) => [styles.avatarPressable, pressed && styles.pressedSoft]}
+              accessibilityRole="button"
+              accessibilityLabel={t("profile.change_photo")}
+            >
+              <ProfileAvatar uri={profile?.avatar_url} source={avatarSource} size={64} />
+              <View style={styles.avatarBadge}>
+                {uploadingPhoto ? (
+                  <ActivityIndicator size="small" color={colors.primaryText} />
+                ) : (
+                  <Ionicons name="camera" size={12} color={colors.primaryText} />
+                )}
+              </View>
+            </Pressable>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName} numberOfLines={1}>
+                {displayName}
+              </Text>
+              <Text style={styles.userEmail} numberOfLines={1}>
+                {email ?? "—"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.photoButtonsRow}>
+            <PhotoButton
+              icon="camera-outline"
+              label={t("profile.camera")}
+              onPress={onPickFromCamera}
+              disabled={uploadingPhoto}
             />
-          ) : null}
+            <PhotoButton
+              icon="images-outline"
+              label={t("profile.gallery")}
+              onPress={onPickFromLibrary}
+              disabled={uploadingPhoto}
+            />
+            {profile?.avatar_url ? (
+              <PhotoButton
+                icon="trash-outline"
+                label={t("profile.remove")}
+                onPress={onRemovePhoto}
+                disabled={uploadingPhoto}
+                destructive
+              />
+            ) : null}
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>{t("profile.appearance")}</Text>
-        <View style={styles.themeCard}>
-          <View style={styles.themeInfo}>
-            <View style={styles.themeIconWrap}>
-              <Ionicons
-                name={mode === "dark" ? "moon" : "sunny"}
-                size={18}
-                color={colors.primary}
-              />
-            </View>
-            <View style={styles.themeTextos}>
-              <Text style={styles.themeLabel}>
-                {mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
-              </Text>
-              <Text style={styles.themeSub}>
-                {isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={mode === "dark"}
-            onValueChange={onToggleTheme}
-            trackColor={{ false: colors.borderStrong, true: colors.primary }}
-            thumbColor="#FFFFFF"
-            ios_backgroundColor={colors.borderStrong}
-          />
-        </View>
+
+        <SettingRow
+          icon={mode === "dark" ? "moon" : "sunny"}
+          label={mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
+          value={isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
+          colors={colors}
+          styles={styles}
+          right={
+            <Switch
+              value={mode === "dark"}
+              onValueChange={() => {
+                haptic.selection();
+                toggleTheme();
+              }}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor={colors.borderStrong}
+            />
+          }
+        />
 
         {isOverridden ? (
           <Pressable
-            onPress={onResetToSystem}
+            onPress={() => {
+              haptic.light();
+              resetToSystem();
+            }}
             style={({ pressed }) => [styles.linkRow, pressed && styles.pressedSoft]}
             accessibilityRole="button"
             accessibilityLabel={t("profile.follow_system")}
@@ -246,29 +225,30 @@ export default function ProfileScreen() {
         ) : null}
 
         <Text style={styles.sectionTitle}>{t("profile.language")}</Text>
+
         <Pressable
-          onPress={onOpenLocalePicker}
-          style={({ pressed }) => [styles.localeRow, pressed && styles.pressedSoft]}
+          onPress={() => {
+            haptic.light();
+            setLocalePickerOpen(true);
+          }}
+          style={({ pressed }) => [pressed && styles.pressedSoft]}
           accessibilityRole="button"
           accessibilityLabel={`${t("profile.language")}: ${LOCALE_LABEL[locale]}`}
         >
-          <View style={styles.localeLeft}>
-            <View style={styles.localeIconWrap}>
-              <Ionicons name="globe-outline" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.localeTextos}>
-              <Text style={styles.localeLabel}>{t("profile.language")}</Text>
-              <Text style={styles.localeValue}>
-                {LOCALE_LABEL[locale]} · {LOCALE_SHORT[locale]}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-down" size={16} color={colors.textSubtle} />
+          <SettingRow
+            icon="globe-outline"
+            label={t("profile.language")}
+            value={`${LOCALE_LABEL[locale]} · ${LOCALE_SHORT[locale]}`}
+            colors={colors}
+            styles={styles}
+            right={<Ionicons name="chevron-down" size={16} color={colors.textSubtle} />}
+          />
         </Pressable>
 
         <Text style={styles.sectionTitle}>{t("profile.account")}</Text>
+
         <View style={styles.actionsCard}>
-          <Button label={t("profile.sign_out")} variant="secondary" onPress={onSignOut} />
+          <Button label={t("profile.sign_out")} variant="ghost" onPress={onSignOut} />
         </View>
       </ScrollView>
 
@@ -279,10 +259,37 @@ export default function ProfileScreen() {
         onHide={() => setToast((p) => ({ ...p, visible: false }))}
       />
 
-      <LocalePicker
-        visible={localePickerOpen}
-        onClose={() => setLocalePickerOpen(false)}
-      />
+      <LocalePicker visible={localePickerOpen} onClose={() => setLocalePickerOpen(false)} />
+    </View>
+  );
+}
+
+// SettingRow — local component, unifies the theme card and locale row visually.
+// Linha de configuracao: icone esquerda + label/value + slot direito.
+type SettingRowProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  right: React.ReactNode;
+  colors: ThemeColors;
+  styles: ReturnType<typeof createStyles>;
+};
+
+function SettingRow({ icon, label, value, right, colors, styles }: SettingRowProps) {
+  return (
+    <View style={styles.settingRow}>
+      <View style={styles.settingLeft}>
+        <View style={styles.settingIconWrap}>
+          <Ionicons name={icon} size={18} color={colors.primary} />
+        </View>
+        <View style={styles.settingTextos}>
+          <Text style={styles.settingLabel}>{label}</Text>
+          <Text style={styles.settingValue} numberOfLines={1}>
+            {value}
+          </Text>
+        </View>
+      </View>
+      {right}
     </View>
   );
 }
@@ -290,21 +297,8 @@ export default function ProfileScreen() {
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg },
-    scrollContent: {
-      paddingHorizontal: 0,
-    },
-    header: {
-      paddingHorizontal: spacing.xl,
-      marginBottom: spacing.lg,
-    },
-    title: {
-      ...typography.h1,
-      color: c.text,
-    },
+    scrollContent: { paddingHorizontal: 0 },
     userCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.lg,
       marginHorizontal: spacing.xl,
       marginBottom: spacing.xl,
       backgroundColor: c.surface,
@@ -312,6 +306,12 @@ function createStyles(c: ThemeColors) {
       padding: spacing.lg,
       borderWidth: 1,
       borderColor: c.border,
+      gap: spacing.lg,
+    },
+    userTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.lg,
     },
     avatarPressable: { position: "relative" },
     avatarBadge: {
@@ -337,6 +337,10 @@ function createStyles(c: ThemeColors) {
       color: c.textMuted,
       marginTop: 2,
     },
+    photoButtonsRow: {
+      flexDirection: "row",
+      gap: spacing.sm,
+    },
     sectionTitle: {
       ...typography.label,
       color: c.textMuted,
@@ -345,13 +349,7 @@ function createStyles(c: ThemeColors) {
       marginBottom: spacing.sm,
       marginTop: spacing.sm,
     },
-    photoButtonsRow: {
-      flexDirection: "row",
-      gap: spacing.sm,
-      paddingHorizontal: spacing.xl,
-      marginBottom: spacing.lg,
-    },
-    themeCard: {
+    settingRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
@@ -364,13 +362,13 @@ function createStyles(c: ThemeColors) {
       borderWidth: 1,
       borderColor: c.border,
     },
-    themeInfo: {
+    settingLeft: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.md,
     },
-    themeIconWrap: {
+    settingIconWrap: {
       width: 36,
       height: 36,
       borderRadius: 18,
@@ -378,15 +376,15 @@ function createStyles(c: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    themeTextos: { flex: 1 },
-    themeLabel: {
-      ...typography.body,
-      fontWeight: "600",
-      color: c.text,
-    },
-    themeSub: {
+    settingTextos: { flex: 1 },
+    settingLabel: {
       ...typography.caption,
       color: c.textMuted,
+    },
+    settingValue: {
+      ...typography.body,
+      fontWeight: "700",
+      color: c.text,
       marginTop: 2,
     },
     linkRow: {
@@ -398,44 +396,6 @@ function createStyles(c: ThemeColors) {
       ...typography.caption,
       color: c.primary,
       fontWeight: "600",
-    },
-    localeRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.md,
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.lg,
-      backgroundColor: c.surface,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    localeLeft: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-    },
-    localeIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: c.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    localeTextos: { flex: 1 },
-    localeLabel: {
-      ...typography.caption,
-      color: c.textMuted,
-    },
-    localeValue: {
-      ...typography.body,
-      fontWeight: "700",
-      color: c.text,
-      marginTop: 2,
     },
     actionsCard: {
       marginHorizontal: spacing.xl,
