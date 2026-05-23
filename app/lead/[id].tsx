@@ -1,6 +1,12 @@
+// Lead detail — Glass Minimalist redesign (Fase 2, screen 5/6).
+// Header: labelCaps "LEAD" + VIN mono large + priority/status badges.
+// Body: glass sections for reason and value.
+// Footer: glass thick fixed at the bottom with 3 actions.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,10 +16,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { FooterAction } from "@/components/ui/FooterAction";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
@@ -22,6 +27,7 @@ import { api, ApiError, type Lead } from "@/lib/api";
 import { formatBRL } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
+  fontFamily,
   leadPriorityPalette,
   leadStatusPalette,
   radius,
@@ -100,17 +106,16 @@ export default function LeadDetailScreen() {
 
   if (loading && !lead) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={[styles.container, { paddingTop: insets.top + spacing["3xl"] }]}>
         <View style={styles.scroll}>
-          <Skeleton width={240} height={28} borderRadius={radius.sm} />
-          <View style={styles.skeletonRow}>
-            <Skeleton width={84} height={28} borderRadius={radius.sm} />
-            <Skeleton width={84} height={28} borderRadius={radius.sm} />
-          </View>
-          <Skeleton width={140} height={16} borderRadius={radius.sm} />
           <Skeleton width={120} height={14} borderRadius={radius.sm} />
-          <Skeleton width="100%" height={64} borderRadius={radius.lg} />
-          <Skeleton width="100%" height={120} borderRadius={radius.lg} />
+          <Skeleton width={240} height={32} borderRadius={radius.sm} />
+          <View style={styles.skeletonRow}>
+            <Skeleton width={84} height={28} borderRadius={radius.pill} />
+            <Skeleton width={84} height={28} borderRadius={radius.pill} />
+          </View>
+          <Skeleton width="100%" height={120} borderRadius={radius.xl} />
+          <Skeleton width="100%" height={96} borderRadius={radius.xl} />
         </View>
       </View>
     );
@@ -119,9 +124,19 @@ export default function LeadDetailScreen() {
   if (error) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + spacing["3xl"] }]}>
-        <ErrorBanner message={error} onRetry={() => void load()} />
+        <View style={styles.errorWrap}>
+          <ErrorBanner message={error} onRetry={() => void load()} />
+        </View>
         <View style={styles.notFoundActions}>
-          <Button label={t("common.back")} variant="ghost" onPress={() => router.back()} />
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              styles.backPill,
+              pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+            ]}
+          >
+            <Text style={styles.backPillLabel}>{t("common.back")}</Text>
+          </Pressable>
         </View>
       </View>
     );
@@ -131,9 +146,15 @@ export default function LeadDetailScreen() {
     return (
       <View style={[styles.center, { paddingTop: insets.top }]}>
         <Text style={styles.muted}>{t("lead.not_found")}</Text>
-        <View style={styles.notFoundActions}>
-          <Button label={t("common.back")} variant="primary" onPress={() => router.back()} />
-        </View>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [
+            styles.backPillPrimary,
+            pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+          ]}
+        >
+          <Text style={styles.backPillPrimaryLabel}>{t("common.back")}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -143,25 +164,33 @@ export default function LeadDetailScreen() {
   const relativeTime = formatRelativeTime(lead.created_at, t);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: insets.bottom + footerHeight + spacing.md },
+          {
+            paddingTop: insets.top + spacing["3xl"],
+            paddingBottom: insets.bottom + footerHeight + spacing.lg,
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.labelCaps}>{t("lead.priority")}</Text>
         <Text style={styles.vin} numberOfLines={1}>
           {lead.vin ?? "—"}
         </Text>
 
         <View style={styles.badgesRow}>
-          <View style={[styles.badge, { backgroundColor: priority.bg, borderColor: priority.border }]}>
+          <View
+            style={[styles.badge, { backgroundColor: priority.bg, borderColor: priority.border }]}
+          >
             <Text style={[styles.badgeLabel, { color: priority.color }]}>
               {t(priority.labelKey)}
             </Text>
           </View>
-          <View style={[styles.badge, { backgroundColor: status.bg, borderColor: status.border }]}>
+          <View
+            style={[styles.badge, { backgroundColor: status.bg, borderColor: status.border }]}
+          >
             <Text style={[styles.badgeLabel, { color: status.color }]}>
               {t(status.labelKey)}
             </Text>
@@ -170,49 +199,60 @@ export default function LeadDetailScreen() {
 
         {relativeTime ? (
           <Text style={styles.created}>
-            {t("lead.section.created")}: {relativeTime}
+            {t("lead.section.created")} · {relativeTime}
           </Text>
         ) : null}
 
         {lead.reason ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t("lead.section.reason")}</Text>
-            <Text style={styles.sectionBody}>{lead.reason}</Text>
-          </View>
+          <GlassSurface variant="thin" radius={20} style={styles.glassSection}>
+            <View style={styles.glassSectionInner}>
+              <Text style={styles.sectionLabel}>{t("lead.section.reason")}</Text>
+              <Text style={styles.sectionBody}>{lead.reason}</Text>
+            </View>
+          </GlassSurface>
         ) : null}
 
         {lead.expected_value_brl != null ? (
-          <Card style={styles.valueCard}>
-            <Text style={styles.sectionLabel}>{t("lead.section.value")}</Text>
-            <Text style={styles.valueBig}>{formatBRL(lead.expected_value_brl)}</Text>
-          </Card>
+          <GlassSurface variant="thin" radius={20} style={styles.glassSection}>
+            <View style={styles.glassSectionInner}>
+              <Text style={styles.sectionLabel}>{t("lead.section.value")}</Text>
+              <Text style={styles.valueBig}>{formatBRL(lead.expected_value_brl)}</Text>
+            </View>
+          </GlassSurface>
         ) : null}
       </ScrollView>
 
-      {/* Footer fixo: stubs honestos (disabled + "Em breve") ate o backend expor as acoes. */}
-      <View
-        style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
-        onLayout={onFooterLayout}
+      {/* Footer fixo glass thick. Stubs honestos (disabled + "Em breve"). */}
+      <GlassSurface
+        variant="thick"
+        radius={0}
+        border={false}
+        style={styles.footerWrap}
       >
-        <FooterAction
-          icon="call-outline"
-          label={t("lead.actions.call")}
-          onPress={() => onComingSoonAction("lead.actions.call")}
-          disabled
-        />
-        <FooterAction
-          icon="chatbubble-ellipses-outline"
-          label={t("lead.actions.message")}
-          onPress={() => onComingSoonAction("lead.actions.message")}
-          disabled
-        />
-        <FooterAction
-          icon="checkmark-circle-outline"
-          label={t("lead.actions.mark_contacted")}
-          onPress={() => onComingSoonAction("lead.actions.mark_contacted")}
-          disabled
-        />
-      </View>
+        <View
+          style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
+          onLayout={onFooterLayout}
+        >
+          <FooterAction
+            icon="call-outline"
+            label={t("lead.actions.call")}
+            onPress={() => onComingSoonAction("lead.actions.call")}
+            disabled
+          />
+          <FooterAction
+            icon="chatbubble-ellipses-outline"
+            label={t("lead.actions.message")}
+            onPress={() => onComingSoonAction("lead.actions.message")}
+            disabled
+          />
+          <FooterAction
+            icon="checkmark-circle-outline"
+            label={t("lead.actions.mark_contacted")}
+            onPress={() => onComingSoonAction("lead.actions.mark_contacted")}
+            disabled
+          />
+        </View>
+      </GlassSurface>
 
       <Toast
         message={toast.message}
@@ -226,17 +266,23 @@ export default function LeadDetailScreen() {
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg },
+    container: { flex: 1, backgroundColor: "transparent" },
     scroll: {
-      padding: spacing.xl,
-      gap: spacing.lg,
+      paddingHorizontal: spacing["2xl"],
+      gap: spacing.md,
+    },
+    labelCaps: {
+      ...typography.labelCaps,
+      color: c.textMuted,
     },
     vin: {
       ...typography.mono,
-      fontSize: 22,
+      fontSize: 32,
+      lineHeight: 36,
       color: c.text,
       fontWeight: "700",
-      letterSpacing: -0.2,
+      letterSpacing: -0.4,
+      marginBottom: spacing.sm,
     },
     badgesRow: {
       flexDirection: "row",
@@ -245,7 +291,7 @@ function createStyles(c: ThemeColors) {
     badge: {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.xs + 2,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       borderWidth: 1,
     },
     badgeLabel: {
@@ -253,49 +299,43 @@ function createStyles(c: ThemeColors) {
       textTransform: "uppercase",
       letterSpacing: 0.6,
     },
-    section: {
-      gap: spacing.sm,
+    created: {
+      ...typography.caption,
+      color: c.textSubtle,
+      marginBottom: spacing.md,
     },
+    glassSection: { marginBottom: spacing.sm },
+    glassSectionInner: { padding: spacing.lg, gap: spacing.sm },
     sectionLabel: {
-      ...typography.label,
+      ...typography.labelCaps,
       color: c.textMuted,
-      textTransform: "uppercase",
     },
     sectionBody: {
       ...typography.body,
       color: c.text,
     },
-    valueCard: {
-      gap: spacing.sm,
-    },
     valueBig: {
-      ...typography.mono,
-      fontSize: 32,
-      color: c.primary,
-      fontWeight: "800",
-      letterSpacing: -0.4,
+      fontFamily: fontFamily.semibold,
+      fontSize: 36,
+      letterSpacing: -0.8,
+      color: c.text,
     },
-    created: {
-      ...typography.caption,
-      color: c.textSubtle,
-    },
-    footer: {
+    footerWrap: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.glassBorder,
+    },
+    footer: {
       flexDirection: "row",
       gap: spacing.sm,
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.md,
-      backgroundColor: c.surface,
-      borderTopWidth: 1,
-      borderTopColor: c.border,
     },
-    skeletonRow: {
-      flexDirection: "row",
-      gap: spacing.sm,
-    },
+    errorWrap: { paddingHorizontal: spacing["2xl"] },
+    skeletonRow: { flexDirection: "row", gap: spacing.sm },
     muted: { ...typography.body, color: c.textMuted },
     center: {
       flex: 1,
@@ -303,11 +343,34 @@ function createStyles(c: ThemeColors) {
       justifyContent: "center",
       padding: spacing.xl,
       gap: spacing.lg,
-      backgroundColor: c.bg,
     },
     notFoundActions: {
       marginTop: spacing.lg,
-      paddingHorizontal: spacing.xl,
+      paddingHorizontal: spacing["2xl"],
+    },
+    backPill: {
+      alignSelf: "flex-start",
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing["2xl"],
+      borderRadius: radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.borderStrong,
+    },
+    backPillLabel: {
+      ...typography.body,
+      fontFamily: fontFamily.semibold,
+      color: c.text,
+    },
+    backPillPrimary: {
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing["3xl"],
+      borderRadius: radius.pill,
+      backgroundColor: c.primary,
+    },
+    backPillPrimaryLabel: {
+      ...typography.body,
+      fontFamily: fontFamily.semibold,
+      color: c.primaryText,
     },
   });
 }
