@@ -56,6 +56,10 @@ export default function TabsLayout() {
         // default; without this the mesh background gets covered inside tabs.
         // sceneStyle no v7 substituiu sceneContainerStyle do v6.
         sceneStyle: { backgroundColor: "transparent" },
+        // animation 'none' avoids the visible overlap when both scenes are
+        // transparent and the cross-fade momentarily renders both stacked.
+        // Sem isso, a troca de aba mostra ambas as cenas sobrepostas.
+        animation: "none",
         tabBarStyle: {
           position: "absolute",
           left: 0,

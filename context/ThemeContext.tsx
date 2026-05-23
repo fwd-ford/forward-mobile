@@ -50,7 +50,15 @@ function isThemeMode(value: string | null): value is ThemeMode {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme();
-  const systemMode: ThemeMode = systemScheme === "light" ? "light" : "dark";
+  // Glass Minimalist design ships dark as the canonical mode. Users can opt
+  // into light via the Profile switch. Following the system would surprise
+  // anyone whose OS is in light by hiding the design's signature look, and
+  // react-native-web's useColorScheme misfires on Windows browsers.
+  // Default dark sempre; light eh opt-in via switch.
+  const systemMode: ThemeMode = "dark";
+  // Unused — kept on purpose so we can revisit follow-system if the product
+  // decides to honor it later. Avoids a noisy refactor when re-enabled.
+  void systemScheme;
 
   // override === null means "follow system"; otherwise it pins the mode.
   const [override, setOverride] = useState<ThemeMode | null>(null);
