@@ -78,6 +78,15 @@
     "light_mode": "Modo claro",
     "theme_auto": "Seguindo o sistema",
     "theme_manual": "Override manual ativo",
-    "follow_system": "Voltar a seguir o sistema"
+    "follow_system": "Voltar a seguir o sistema",
+    "photo": "Foto",
+    "change_photo": "Trocar foto",
+    "camera": "Camera",
+    "gallery": "Galeria",
+    "remove": "Remover",
+    "photo_updated": "Foto atualizada",
+    "photo_failed": "Nao foi possivel enviar a foto",
+    "photo_removed": "Foto removida",
+    "photo_remove_failed": "Nao foi possivel remover a foto"
   }
 }
