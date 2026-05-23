@@ -143,7 +143,7 @@ export default function ProfileScreen() {
   const avatarSource = profile?.full_name ?? "";
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,

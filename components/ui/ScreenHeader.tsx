@@ -6,6 +6,7 @@
 
 import { useMemo, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/context/ThemeContext";
 import { spacing, typography, type ThemeColors } from "@/lib/theme";
@@ -18,10 +19,11 @@ export interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, subtitle, trailing }: ScreenHeaderProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.text}>
         <Text style={styles.title} numberOfLines={1}>
           {title}
@@ -45,7 +47,6 @@ function createStyles(c: ThemeColors) {
       justifyContent: "space-between",
       gap: spacing.md,
       paddingHorizontal: spacing.xl,
-      paddingTop: spacing.lg,
       paddingBottom: spacing.lg,
     },
     text: { flex: 1, gap: spacing.xs },
