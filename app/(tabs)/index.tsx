@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import { LeadCard } from "@/components/domain/LeadCard";
 import { LeadCardSkeleton } from "@/components/domain/LeadCardSkeleton";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -92,7 +93,10 @@ export default function HomeScreen() {
       }
       const auth = await supabase.auth.getUser();
       const email = auth.data.user?.email;
-      if (email) setName(email.split("@")[0]);
+      if (email) {
+        const prefix = email.split("@")[0];
+        setName(prefix.charAt(0).toUpperCase() + prefix.slice(1));
+      }
     })();
   }, []);
 
@@ -128,19 +132,31 @@ export default function HomeScreen() {
         <View>
           <ScreenHeader title={t("home.today")} subtitle={greeting.trim()} />
 
-          <Card style={styles.hero}>
-            <View style={styles.heroCol}>
-              <Text style={styles.heroLabel}>{t("home.hero.active_leads")}</Text>
-              <Text style={styles.heroValue}>{hero.activeLeads}</Text>
-            </View>
-            <View style={styles.heroDivider} />
-            <View style={styles.heroCol}>
-              <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
-              <Text style={styles.heroValue}>{formatBRL(hero.pipelineBRL, { compact: true })}</Text>
-            </View>
-          </Card>
+          {/*
+            Hero hides on initial error with no cached leads: rendering "0 / R$ 0"
+            mid-error reads as real numbers and panics the user. Once any data
+            arrived (e.g. refresh-after-success), keep it visible even if a later
+            refresh errors so stale-but-useful beats blank.
+            Hero some no erro inicial sem leads: "0 / R$ 0" parece dado real e
+            assusta. Com dados em cache, mantem mesmo num erro de refresh.
+          */}
+          {!(error && leads.length === 0) ? (
+            <Card style={styles.hero}>
+              <View style={styles.heroCol}>
+                <Text style={styles.heroLabel}>{t("home.hero.active_leads")}</Text>
+                <Text style={styles.heroValue}>{hero.activeLeads}</Text>
+              </View>
+              <View style={styles.heroDivider} />
+              <View style={styles.heroCol}>
+                <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
+                <Text style={styles.heroValue}>{formatBRL(hero.pipelineBRL, { compact: true })}</Text>
+              </View>
+            </Card>
+          ) : null}
 
-          {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
+          {error && leads.length > 0 ? (
+            <ErrorBanner message={error} onRetry={() => void load()} />
+          ) : null}
 
           {initialLoading ? (
             <View style={styles.skeletonStack}>
@@ -152,12 +168,27 @@ export default function HomeScreen() {
         </View>
       }
       ListEmptyComponent={
-        !initialLoading && !error ? (
-          <EmptyState
-            icon="briefcase-outline"
-            title={t("home.empty_title")}
-            description={t("home.empty_description")}
-          />
+        !initialLoading ? (
+          error ? (
+            <EmptyState
+              icon="cloud-offline-outline"
+              title={t("home.error_title")}
+              description={error}
+              action={
+                <Button
+                  label={t("common.retry")}
+                  variant="secondary"
+                  onPress={() => void load()}
+                />
+              }
+            />
+          ) : (
+            <EmptyState
+              icon="briefcase-outline"
+              title={t("home.empty_title")}
+              description={t("home.empty_description")}
+            />
+          )
         ) : null
       }
       ListFooterComponent={
