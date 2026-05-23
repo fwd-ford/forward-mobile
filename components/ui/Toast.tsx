@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/context/ThemeContext";
 import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
@@ -25,6 +26,7 @@ export function Toast({
   duration = 2500,
 }: ToastProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const translateY = useRef(new Animated.Value(ENTER_OFFSET)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -84,11 +86,16 @@ export function Toast({
       pointerEvents="none"
       style={[
         styles.container,
-        { borderLeftColor: accent, opacity, transform: [{ translateY }] },
+        {
+          top: insets.top + spacing.sm,
+          borderLeftColor: accent,
+          opacity,
+          transform: [{ translateY }],
+        },
       ]}
     >
       <Ionicons name={iconName} size={20} color={accent} />
-      <Text style={styles.message} numberOfLines={2}>
+      <Text style={styles.message} numberOfLines={3}>
         {message}
       </Text>
     </Animated.View>
@@ -99,7 +106,6 @@ function createStyles(c: ThemeColors) {
   return StyleSheet.create({
     container: {
       position: "absolute",
-      top: 60,
       left: spacing.xl,
       right: spacing.xl,
       flexDirection: "row",
@@ -108,14 +114,16 @@ function createStyles(c: ThemeColors) {
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.lg,
       borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.border,
       borderLeftWidth: 3,
       backgroundColor: c.surface,
       zIndex: 1000,
-      elevation: 8,
+      elevation: 10,
       shadowColor: "#000",
-      shadowOpacity: 0.2,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.28,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
     },
     message: {
       flex: 1,

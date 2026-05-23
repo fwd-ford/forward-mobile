@@ -13,8 +13,10 @@
     "password": "Password",
     "subtitle": "Welcome. Sign in to access your leads.",
     "loading": "Loading",
+    "signing_in": "Signing in...",
     "error": "Could not sign in. Check your credentials.",
-    "forgot_password": "Forgot password"
+    "forgot_password": "Forgot password",
+    "forgot_help": "Coming soon. For now, ask your admin to reset it."
   },
   "tabs": {
     "home": "Home",

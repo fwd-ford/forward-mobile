@@ -105,7 +105,7 @@ export default function LoginScreen() {
     haptic.light();
     setToast({
       visible: true,
-      message: t("common.coming_soon"),
+      message: t("auth.forgot_help"),
       variant: "info",
     });
   }
@@ -177,6 +177,7 @@ export default function LoginScreen() {
 
           <Button
             label={t("auth.sign_in")}
+            loadingLabel={t("auth.signing_in")}
             loading={loading}
             disabled={buttonDisabled}
             onPress={onSubmit}

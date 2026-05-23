@@ -17,12 +17,15 @@ export interface ButtonProps extends Omit<PressableProps, "children"> {
   label: string;
   variant?: Variant;
   loading?: boolean;
+  /** Optional label shown next to the spinner while loading. Falls back to spinner-only when omitted. */
+  loadingLabel?: string;
 }
 
 export function Button({
   label,
   variant = "primary",
   loading,
+  loadingLabel,
   disabled,
   style,
   ...rest
@@ -77,7 +80,14 @@ export function Button({
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={indicatorColor} />
+          loadingLabel ? (
+            <>
+              <ActivityIndicator color={indicatorColor} style={styles.spinnerInline} />
+              <Text style={labelStyle}>{loadingLabel}</Text>
+            </>
+          ) : (
+            <ActivityIndicator color={indicatorColor} />
+          )
         ) : (
           <Text style={labelStyle}>{label}</Text>
         )}
@@ -92,10 +102,14 @@ function createStyles(c: ThemeColors) {
       height: 48,
       paddingHorizontal: spacing.lg,
       borderRadius: radius.md,
+      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
       borderColor: "transparent",
+    },
+    spinnerInline: {
+      marginRight: spacing.sm,
     },
     primary: { backgroundColor: c.primary, borderColor: c.primary },
     secondary: { backgroundColor: c.surface, borderColor: c.border },

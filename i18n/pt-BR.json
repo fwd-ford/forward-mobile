@@ -17,8 +17,10 @@
     "password": "Senha",
     "subtitle": "Bem-vindo. Entre para acessar seus leads.",
     "loading": "Carregando",
+    "signing_in": "Entrando...",
     "error": "Nao foi possivel entrar. Verifique suas credenciais.",
-    "forgot_password": "Esqueci minha senha"
+    "forgot_password": "Esqueci minha senha",
+    "forgot_help": "Em breve. Por enquanto, peca um reset ao seu admin."
   },
   "tabs": {
     "home": "Inicio",
