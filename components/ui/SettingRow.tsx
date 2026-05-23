@@ -1,13 +1,15 @@
 // SettingRow: linha de configuracao com icone + label/value + slot direito.
-// Reutilizada na tela de perfil (tema, idioma) e qualquer outra que precise
-// expor uma propriedade com explicacao secundaria + controle inline.
+// Reescrita pro Glass Minimalist: transparent (sem wrapping de card), opt-in
+// divider hairline pra ser usada dentro de um group GlassSurface no Profile.
+//
+// Layout: [iconWrap 36x36] [label\nvalue] [right slot]
 
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
-import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { spacing, typography, type ThemeColors } from "@/lib/theme";
 
 export type SettingRowEmphasis = "label" | "value";
 
@@ -23,6 +25,8 @@ export interface SettingRowProps {
    * e o value e auxiliar ("Manual").
    */
   emphasis?: SettingRowEmphasis;
+  /** Show a hairline divider at the bottom — set true on all-but-last in a group. */
+  divider?: boolean;
 }
 
 export function SettingRow({
@@ -31,6 +35,7 @@ export function SettingRow({
   value,
   right,
   emphasis = "value",
+  divider,
 }: SettingRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -38,10 +43,15 @@ export function SettingRow({
   const valueStyle = emphasis === "label" ? styles.textSecondary : styles.textPrimary;
 
   return (
-    <View style={styles.row}>
+    <View
+      style={[
+        styles.row,
+        divider && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder },
+      ]}
+    >
       <View style={styles.left}>
         <View style={styles.iconWrap}>
-          <Ionicons name={icon} size={18} color={colors.primary} />
+          <Ionicons name={icon} size={18} color={colors.text} />
         </View>
         <View style={styles.textCol}>
           <Text style={labelStyle} numberOfLines={1}>
@@ -64,13 +74,9 @@ function createStyles(c: ThemeColors) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: spacing.md,
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.md,
-      backgroundColor: c.surface,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      borderWidth: 1,
-      borderColor: c.border,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md + 2,
+      backgroundColor: "transparent",
     },
     left: {
       flex: 1,
