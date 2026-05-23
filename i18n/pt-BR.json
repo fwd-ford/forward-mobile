@@ -62,6 +62,21 @@
     "call": "Ligar",
     "message": "Enviar WhatsApp"
   },
+  "leads": {
+    "title": "Leads",
+    "subtitle_count_one": "{{count}} ativo",
+    "subtitle_count_other": "{{count}} ativos",
+    "subtitle_showing": "Mostrando {{showing}} de {{total}}",
+    "search_placeholder": "Buscar por VIN ou motivo",
+    "filter": {
+      "all": "Todos",
+      "critical": "Críticos",
+      "today": "Hoje",
+      "forgotten": "Esquecidos 30d+"
+    },
+    "empty_search_title": "Nada encontrado",
+    "empty_search_description": "Sem leads para '{{query}}'. Tente VIN parcial ou outro filtro."
+  },
   "segment": {
     "fiel": "Fiel",
     "abandono": "Abandono",
