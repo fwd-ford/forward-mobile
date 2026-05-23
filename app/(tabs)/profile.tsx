@@ -1,6 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
@@ -8,15 +16,19 @@ import { router } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
-import { haptic } from "@/lib/haptics";
 import { signOut } from "@/lib/auth";
+import { deleteAvatar, uploadAvatar } from "@/lib/avatar-upload";
+import { haptic } from "@/lib/haptics";
+import { pickFromCamera, pickFromLibrary, type PickedImage } from "@/lib/image-picker";
+import { fetchMyProfile, updateMyProfile, type Profile } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
-type SessionUser = {
+type ProfileState = {
   email: string | null;
-  fullName: string | null;
+  profile: Profile | null;
 };
 
 export default function ProfileScreen() {
@@ -24,17 +36,75 @@ export default function ProfileScreen() {
   const { colors, mode, toggleTheme, isOverridden, resetToSystem } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [state, setState] = useState<ProfileState | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    variant: ToastVariant;
+  }>({ visible: false, message: "", variant: "success" });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
-      setUser({
-        email: u?.email ?? null,
-        fullName: (u?.user_metadata?.full_name as string | undefined) ?? null,
+    void (async () => {
+      const [authRes, profile] = await Promise.all([
+        supabase.auth.getUser(),
+        fetchMyProfile().catch(() => null),
+      ]);
+      setState({
+        email: authRes.data.user?.email ?? null,
+        profile,
       });
-    });
+    })();
   }, []);
+
+  function showToast(message: string, variant: ToastVariant = "success") {
+    setToast({ visible: true, message, variant });
+  }
+
+  async function applyPhoto(picked: PickedImage) {
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadAvatar(picked);
+      const updated = await updateMyProfile({ avatar_url: url });
+      setState((prev) => (prev ? { ...prev, profile: updated } : prev));
+      haptic.success();
+      showToast(t("profile.photo_updated"));
+    } catch {
+      haptic.error();
+      showToast(t("profile.photo_failed"), "error");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function onPickFromLibrary() {
+    haptic.light();
+    const picked = await pickFromLibrary();
+    if (picked) await applyPhoto(picked);
+  }
+
+  async function onPickFromCamera() {
+    haptic.light();
+    const picked = await pickFromCamera();
+    if (picked) await applyPhoto(picked);
+  }
+
+  async function onRemovePhoto() {
+    haptic.warning();
+    setUploadingPhoto(true);
+    try {
+      await deleteAvatar();
+      const updated = await updateMyProfile({ avatar_url: null });
+      setState((prev) => (prev ? { ...prev, profile: updated } : prev));
+      haptic.success();
+      showToast(t("profile.photo_removed"));
+    } catch {
+      haptic.error();
+      showToast(t("profile.photo_remove_failed"), "error");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
 
   async function onSignOut() {
     haptic.medium();
@@ -52,82 +122,192 @@ export default function ProfileScreen() {
     resetToSystem();
   }
 
-  if (!user) {
+  if (!state) {
     return <LoadingScreen label={t("loading.profile")} />;
   }
 
+  const { email, profile } = state;
+  const displayName = profile?.full_name ?? t("profile.unnamed");
+  const avatarSource = profile?.full_name ?? email ?? "?";
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.scrollContent,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing["4xl"] },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t("tabs.profile")}</Text>
-      </View>
-
-      <View style={styles.userCard}>
-        <ProfileAvatar
-          source={user.fullName ?? user.email ?? "?"}
-          size={56}
-        />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName} numberOfLines={1}>
-            {user.fullName ?? t("profile.unnamed")}
-          </Text>
-          <Text style={styles.userEmail} numberOfLines={1}>
-            {user.email ?? "—"}
-          </Text>
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing["4xl"] },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>{t("tabs.profile")}</Text>
         </View>
-      </View>
 
-      <Text style={styles.sectionTitle}>{t("profile.appearance")}</Text>
-      <View style={styles.themeCard}>
-        <View style={styles.themeInfo}>
-          <View style={styles.themeIconWrap}>
-            <Ionicons
-              name={mode === "dark" ? "moon" : "sunny"}
-              size={18}
-              color={colors.primary}
+        <View style={styles.userCard}>
+          <Pressable
+            onPress={onPickFromLibrary}
+            disabled={uploadingPhoto}
+            style={({ pressed }) => [styles.avatarPressable, pressed && styles.pressedSoft]}
+            accessibilityRole="button"
+            accessibilityLabel={t("profile.change_photo")}
+          >
+            <ProfileAvatar uri={profile?.avatar_url} source={avatarSource} size={64} />
+            <View style={styles.avatarBadge}>
+              {uploadingPhoto ? (
+                <ActivityIndicator size="small" color={colors.primaryText} />
+              ) : (
+                <Ionicons name="camera" size={12} color={colors.primaryText} />
+              )}
+            </View>
+          </Pressable>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName} numberOfLines={1}>
+              {displayName}
+            </Text>
+            <Text style={styles.userEmail} numberOfLines={1}>
+              {email ?? "—"}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>{t("profile.photo")}</Text>
+        <View style={styles.photoButtonsRow}>
+          <PhotoButton
+            icon="camera-outline"
+            label={t("profile.camera")}
+            onPress={onPickFromCamera}
+            disabled={uploadingPhoto}
+            colors={colors}
+            styles={styles}
+          />
+          <PhotoButton
+            icon="images-outline"
+            label={t("profile.gallery")}
+            onPress={onPickFromLibrary}
+            disabled={uploadingPhoto}
+            colors={colors}
+            styles={styles}
+          />
+          {profile?.avatar_url ? (
+            <PhotoButton
+              icon="trash-outline"
+              label={t("profile.remove")}
+              onPress={onRemovePhoto}
+              disabled={uploadingPhoto}
+              colors={colors}
+              styles={styles}
+              destructive
             />
-          </View>
-          <View style={styles.themeTextos}>
-            <Text style={styles.themeLabel}>
-              {mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
-            </Text>
-            <Text style={styles.themeSub}>
-              {isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
-            </Text>
-          </View>
+          ) : null}
         </View>
-        <Switch
-          value={mode === "dark"}
-          onValueChange={onToggleTheme}
-          trackColor={{ false: colors.borderStrong, true: colors.primary }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={colors.borderStrong}
+
+        <Text style={styles.sectionTitle}>{t("profile.appearance")}</Text>
+        <View style={styles.themeCard}>
+          <View style={styles.themeInfo}>
+            <View style={styles.themeIconWrap}>
+              <Ionicons
+                name={mode === "dark" ? "moon" : "sunny"}
+                size={18}
+                color={colors.primary}
+              />
+            </View>
+            <View style={styles.themeTextos}>
+              <Text style={styles.themeLabel}>
+                {mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
+              </Text>
+              <Text style={styles.themeSub}>
+                {isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={mode === "dark"}
+            onValueChange={onToggleTheme}
+            trackColor={{ false: colors.borderStrong, true: colors.primary }}
+            thumbColor="#FFFFFF"
+            ios_backgroundColor={colors.borderStrong}
+          />
+        </View>
+
+        {isOverridden ? (
+          <Pressable
+            onPress={onResetToSystem}
+            style={({ pressed }) => [styles.linkRow, pressed && styles.pressedSoft]}
+            accessibilityRole="button"
+            accessibilityLabel={t("profile.follow_system")}
+          >
+            <Text style={styles.linkText}>{t("profile.follow_system")}</Text>
+          </Pressable>
+        ) : null}
+
+        <Text style={styles.sectionTitle}>{t("profile.account")}</Text>
+        <View style={styles.actionsCard}>
+          <Button label={t("profile.sign_out")} variant="secondary" onPress={onSignOut} />
+        </View>
+      </ScrollView>
+
+      <Toast
+        message={toast.message}
+        variant={toast.variant}
+        visible={toast.visible}
+        onHide={() => setToast((p) => ({ ...p, visible: false }))}
+      />
+    </View>
+  );
+}
+
+type PhotoButtonProps = {
+  icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  disabled: boolean;
+  destructive?: boolean;
+  colors: ThemeColors;
+  styles: ReturnType<typeof createStyles>;
+};
+
+function PhotoButton({
+  icon,
+  label,
+  onPress,
+  disabled,
+  destructive,
+  colors,
+  styles,
+}: PhotoButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.photoButton,
+        pressed && styles.pressedSoft,
+        disabled && { opacity: 0.5 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <View
+        style={[
+          styles.photoIconWrap,
+          destructive ? { backgroundColor: colors.errorSoft } : undefined,
+        ]}
+      >
+        <Ionicons
+          name={icon}
+          size={18}
+          color={destructive ? colors.error : colors.primary}
         />
       </View>
-
-      {isOverridden ? (
-        <Pressable
-          onPress={onResetToSystem}
-          style={({ pressed }) => [styles.linkRow, pressed && styles.pressedSoft]}
-          accessibilityRole="button"
-          accessibilityLabel={t("profile.follow_system")}
-        >
-          <Text style={styles.linkText}>{t("profile.follow_system")}</Text>
-        </Pressable>
-      ) : null}
-
-      <Text style={styles.sectionTitle}>{t("profile.account")}</Text>
-      <View style={styles.actionsCard}>
-        <Button label={t("profile.sign_out")} variant="secondary" onPress={onSignOut} />
-      </View>
-    </ScrollView>
+      <Text
+        style={[
+          styles.photoButtonLabel,
+          destructive ? { color: colors.error } : undefined,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -157,6 +337,20 @@ function createStyles(c: ThemeColors) {
       borderWidth: 1,
       borderColor: c.border,
     },
+    avatarPressable: { position: "relative" },
+    avatarBadge: {
+      position: "absolute",
+      bottom: -2,
+      right: -2,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: c.surface,
+    },
     userInfo: { flex: 1 },
     userName: {
       ...typography.h3,
@@ -174,6 +368,35 @@ function createStyles(c: ThemeColors) {
       paddingHorizontal: spacing.xl,
       marginBottom: spacing.sm,
       marginTop: spacing.sm,
+    },
+    photoButtonsRow: {
+      flexDirection: "row",
+      gap: spacing.sm,
+      paddingHorizontal: spacing.xl,
+      marginBottom: spacing.lg,
+    },
+    photoButton: {
+      flex: 1,
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      paddingVertical: spacing.md + 2,
+      alignItems: "center",
+      gap: spacing.sm,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    photoIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    photoButtonLabel: {
+      ...typography.caption,
+      fontWeight: "600",
+      color: c.text,
     },
     themeCard: {
       flexDirection: "row",

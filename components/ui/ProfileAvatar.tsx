@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
@@ -15,6 +15,13 @@ export function ProfileAvatar({ uri, source, size = 96 }: ProfileAvatarProps) {
   const { colors } = useTheme();
   const [loadError, setLoadError] = useState(false);
   const styles = useMemo(() => createStyles(colors, size), [colors, size]);
+
+  // When the URI changes (user uploaded a new avatar), reset the error
+  // state so we attempt to load the new image instead of staying on placeholder.
+  // URI novo (foto atualizada) reseta loadError para tentar carregar de novo.
+  useEffect(() => {
+    setLoadError(false);
+  }, [uri]);
 
   const showImage = !!uri && !loadError;
 
