@@ -12,7 +12,8 @@
     "password": "Password",
     "subtitle": "Welcome. Sign in to access your leads.",
     "loading": "Loading",
-    "error": "Could not sign in. Check your credentials."
+    "error": "Could not sign in. Check your credentials.",
+    "forgot_password": "Forgot password"
   },
   "tabs": {
     "home": "Home",
