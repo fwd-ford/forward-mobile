@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,12 +15,13 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
 import { useFadeIn } from "@/hooks/useFadeIn";
 import { useShake } from "@/hooks/useShake";
 import { signInWithEmail } from "@/lib/auth";
 import { haptic } from "@/lib/haptics";
-import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontWeight, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 import {
   validateEmail,
   validatePassword,
@@ -48,11 +50,29 @@ export default function LoginScreen() {
   const { translateX, shake } = useShake();
   const { opacity, translateY } = useFadeIn(360);
 
+  // Scale-in for the header — sits on top of the fade. Subtle (0.96 -> 1).
+  // Scale leve junto do fade pra entrada mais viva.
+  const scale = useRef(new Animated.Value(0.96)).current;
+  useMemo(() => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 8,
+      bounciness: 6,
+    }).start();
+    return null;
+  }, [scale]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    variant: ToastVariant;
+  }>({ visible: false, message: "", variant: "info" });
 
   const errors = useMemo(() => validate({ email, password }), [email, password]);
   const visibleErrors: Errors = submitted ? errors : {};
@@ -81,6 +101,15 @@ export default function LoginScreen() {
     }
   }
 
+  function onForgotPassword() {
+    haptic.light();
+    setToast({
+      visible: true,
+      message: t("common.coming_soon"),
+      variant: "info",
+    });
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -89,12 +118,18 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + spacing["4xl"], paddingBottom: insets.bottom + spacing["4xl"] },
+          { paddingTop: insets.top + spacing["4xl"], paddingBottom: insets.bottom + spacing["2xl"] },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={[styles.header, { opacity, transform: [{ translateY }] }]}>
+        <Animated.View
+          style={[
+            styles.header,
+            { opacity, transform: [{ translateY }, { scale }] },
+          ]}
+        >
+          <Text style={styles.brand}>FORD</Text>
           <Text style={styles.title}>{t("app.name")}</Text>
           <Text style={styles.subtitle}>{t("auth.subtitle")}</Text>
         </Animated.View>
@@ -148,7 +183,24 @@ export default function LoginScreen() {
             style={styles.submit}
           />
         </View>
+
+        <Pressable
+          onPress={onForgotPassword}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t("auth.forgot_password")}
+          style={({ pressed }) => [styles.forgotWrap, pressed && { opacity: 0.6 }]}
+        >
+          <Text style={styles.forgotLabel}>{t("auth.forgot_password")}</Text>
+        </Pressable>
       </ScrollView>
+
+      <Toast
+        message={toast.message}
+        variant={toast.variant}
+        visible={toast.visible}
+        onHide={() => setToast((p) => ({ ...p, visible: false }))}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -164,12 +216,21 @@ function createStyles(c: ThemeColors) {
     header: {
       alignItems: "center",
       marginBottom: spacing["2xl"],
+      gap: spacing.xs,
+    },
+    brand: {
+      fontSize: 40,
+      fontWeight: fontWeight.extrabold,
+      letterSpacing: 6,
+      color: c.primary,
+      marginBottom: spacing.md,
     },
     title: { ...typography.h1, color: c.text },
     subtitle: {
       ...typography.body,
       color: c.textMuted,
-      marginTop: spacing.sm,
+      textAlign: "center",
+      paddingHorizontal: spacing.lg,
     },
     form: { width: "100%" },
     serverErrorBox: {
@@ -188,5 +249,15 @@ function createStyles(c: ThemeColors) {
       textAlign: "center",
     },
     submit: { marginTop: spacing.md },
+    forgotWrap: {
+      alignItems: "center",
+      paddingVertical: spacing.lg,
+      marginTop: spacing.md,
+    },
+    forgotLabel: {
+      ...typography.caption,
+      color: c.primary,
+      fontWeight: "600",
+    },
   });
 }
