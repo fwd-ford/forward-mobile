@@ -33,7 +33,10 @@ export function IntroVideo({ onFinished }: IntroVideoProps) {
   const player = useVideoPlayer(INTRO_SOURCE, (p) => {
     p.loop = false;
     p.muted = true;
-    p.play();
+    // play() removed from setup - does not work on web during render phase
+    // (the <video> DOM element isn't mounted yet, so the call iterates an
+    // empty Set). Moved to useEffect below.
+    // play() saiu do setup - no web nao funciona durante render.
   });
 
   // Fade the overlay out, then notify the parent once.
@@ -47,8 +50,23 @@ export function IntroVideo({ onFinished }: IntroVideoProps) {
   }, [onFinished, opacity]);
 
   useEffect(() => {
+    // Native: play() pending until VideoView mounts (handled by impl).
+    // Web: VideoView.web.js requires the <video> in DOM before play().
+    // useEffect runs post-mount, so this works on both platforms.
+    // Nativo retem play() pendente; web exige <video> montado.
+    player.play();
     const sub = player.addListener("playToEnd", finish);
-    return () => sub.remove();
+
+    // Web autoplay can be blocked silently by the browser. After 6s with no
+    // playToEnd event, release the gate so the user is never stuck on intro.
+    // Native always reaches playToEnd well before this timeout fires.
+    // Fallback de 6s pra autoplay bloqueado no web.
+    const blockedTimeout = setTimeout(finish, 6000);
+
+    return () => {
+      sub.remove();
+      clearTimeout(blockedTimeout);
+    };
   }, [player, finish]);
 
   const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
@@ -62,6 +80,7 @@ export function IntroVideo({ onFinished }: IntroVideoProps) {
           contentFit="cover"
           nativeControls={false}
           allowsPictureInPicture={false}
+          playsInline
         />
       </Pressable>
       <Pressable onPress={finish} hitSlop={12} style={styles.skip} accessibilityRole="button">
