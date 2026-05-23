@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +19,7 @@ import { LocalePicker } from "@/components/ui/LocalePicker";
 import { PhotoButton } from "@/components/ui/PhotoButton";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { SettingRow } from "@/components/ui/SettingRow";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useLocale } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -116,11 +117,29 @@ export default function ProfileScreen() {
     router.replace("/login");
   }
 
+  const onToggleTheme = useCallback(() => {
+    haptic.selection();
+    toggleTheme();
+  }, [toggleTheme]);
+
+  const onResetToSystem = useCallback(() => {
+    haptic.light();
+    resetToSystem();
+  }, [resetToSystem]);
+
+  const onOpenLocalePicker = useCallback(() => {
+    haptic.light();
+    setLocalePickerOpen(true);
+  }, []);
+
   if (!state) return <LoadingScreen label={t("loading.profile")} />;
 
   const { email, profile } = state;
   const displayName = profile?.full_name ?? t("profile.unnamed");
-  const avatarSource = profile?.full_name ?? email ?? "?";
+  // Sem full_name passamos string vazia para a placeholder mostrar "?" (icone
+  // generico de iniciais), evitando o "JO" estranho derivado de "joao.silva@...".
+  // Quando o onboarding obrigar full_name, esse fallback fica obsoleto.
+  const avatarSource = profile?.full_name ?? "";
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -194,15 +213,11 @@ export default function ProfileScreen() {
           icon={mode === "dark" ? "moon" : "sunny"}
           label={mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
           value={isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
-          colors={colors}
-          styles={styles}
+          emphasis="label"
           right={
             <Switch
               value={mode === "dark"}
-              onValueChange={() => {
-                haptic.selection();
-                toggleTheme();
-              }}
+              onValueChange={onToggleTheme}
               trackColor={{ false: colors.borderStrong, true: colors.primary }}
               thumbColor="#FFFFFF"
               ios_backgroundColor={colors.borderStrong}
@@ -212,10 +227,7 @@ export default function ProfileScreen() {
 
         {isOverridden ? (
           <Pressable
-            onPress={() => {
-              haptic.light();
-              resetToSystem();
-            }}
+            onPress={onResetToSystem}
             style={({ pressed }) => [styles.linkRow, pressed && styles.pressedSoft]}
             accessibilityRole="button"
             accessibilityLabel={t("profile.follow_system")}
@@ -227,10 +239,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>{t("profile.language")}</Text>
 
         <Pressable
-          onPress={() => {
-            haptic.light();
-            setLocalePickerOpen(true);
-          }}
+          onPress={onOpenLocalePicker}
           style={({ pressed }) => [pressed && styles.pressedSoft]}
           accessibilityRole="button"
           accessibilityLabel={`${t("profile.language")}: ${LOCALE_LABEL[locale]}`}
@@ -239,8 +248,6 @@ export default function ProfileScreen() {
             icon="globe-outline"
             label={t("profile.language")}
             value={`${LOCALE_LABEL[locale]} · ${LOCALE_SHORT[locale]}`}
-            colors={colors}
-            styles={styles}
             right={<Ionicons name="chevron-down" size={16} color={colors.textSubtle} />}
           />
         </Pressable>
@@ -260,36 +267,6 @@ export default function ProfileScreen() {
       />
 
       <LocalePicker visible={localePickerOpen} onClose={() => setLocalePickerOpen(false)} />
-    </View>
-  );
-}
-
-// SettingRow — local component, unifies the theme card and locale row visually.
-// Linha de configuracao: icone esquerda + label/value + slot direito.
-type SettingRowProps = {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  right: React.ReactNode;
-  colors: ThemeColors;
-  styles: ReturnType<typeof createStyles>;
-};
-
-function SettingRow({ icon, label, value, right, colors, styles }: SettingRowProps) {
-  return (
-    <View style={styles.settingRow}>
-      <View style={styles.settingLeft}>
-        <View style={styles.settingIconWrap}>
-          <Ionicons name={icon} size={18} color={colors.primary} />
-        </View>
-        <View style={styles.settingTextos}>
-          <Text style={styles.settingLabel}>{label}</Text>
-          <Text style={styles.settingValue} numberOfLines={1}>
-            {value}
-          </Text>
-        </View>
-      </View>
-      {right}
     </View>
   );
 }
@@ -339,6 +316,7 @@ function createStyles(c: ThemeColors) {
     },
     photoButtonsRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: spacing.sm,
     },
     sectionTitle: {
@@ -348,44 +326,6 @@ function createStyles(c: ThemeColors) {
       paddingHorizontal: spacing.xl,
       marginBottom: spacing.sm,
       marginTop: spacing.sm,
-    },
-    settingRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.md,
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.md,
-      backgroundColor: c.surface,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    settingLeft: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-    },
-    settingIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: c.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    settingTextos: { flex: 1 },
-    settingLabel: {
-      ...typography.caption,
-      color: c.textMuted,
-    },
-    settingValue: {
-      ...typography.body,
-      fontWeight: "700",
-      color: c.text,
-      marginTop: 2,
     },
     linkRow: {
       paddingHorizontal: spacing.xl,
