@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { LeadCard } from "@/components/domain/LeadCard";
@@ -45,11 +45,10 @@ export default function LeadsScreen() {
         ) : null
       }
       renderItem={({ item }) => (
-        <Link href={{ pathname: "/lead/[id]", params: { id: item.id } }} asChild>
-          <View>
-            <LeadCard lead={item} />
-          </View>
-        </Link>
+        <LeadCard
+          lead={item}
+          onPress={() => router.push({ pathname: "/lead/[id]", params: { id: item.id } })}
+        />
       )}
       ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
     />
