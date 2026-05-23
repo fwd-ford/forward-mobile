@@ -5,15 +5,15 @@
 //   1. Priority chip (colored, uppercase) on the left + relative time on the right
 //   2. VIN in mono semibold
 //   3. Reason in body textMuted (optional)
-//   4. Status dot + label on the left + expected value (mono, primary color) on the right
-// Pressable wraps the whole thing; haptic light on press; scale 0.99 on press.
-// Card de lead na lista: stripe + chip + VIN mono + razao + status + valor.
+//   4. Status dot + label on the left + expected value (mono primary text) on the right
+// Wrapped in GlassSurface (thin variant) so it sits on top of the mesh bg.
+// Card de lead: stripe + chip + VIN mono + razao + status + valor sobre glass.
 
 import React, { useMemo, useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { Card } from "@/components/ui/Card";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import type { Lead } from "@/lib/api";
@@ -64,7 +64,7 @@ export function LeadCard({ lead, onPress }: LeadCardProps) {
   };
 
   const cardBody = (
-    <Card style={styles.card}>
+    <GlassSurface variant="thin" radius={18} style={styles.card}>
       <View style={[styles.stripe, { backgroundColor: priority.color }]} />
       <View style={styles.body}>
         <View style={styles.row}>
@@ -104,7 +104,7 @@ export function LeadCard({ lead, onPress }: LeadCardProps) {
           ) : null}
         </View>
       </View>
-    </Card>
+    </GlassSurface>
   );
 
   if (!onPress) return cardBody;
@@ -197,7 +197,7 @@ function createStyles(c: ThemeColors) {
     },
     value: {
       ...typography.mono,
-      color: c.primary,
+      color: c.text,
       fontWeight: "700",
     },
   });
