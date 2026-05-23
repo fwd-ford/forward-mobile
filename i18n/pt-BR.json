@@ -79,6 +79,7 @@
     "theme_auto": "Seguindo o sistema",
     "theme_manual": "Override manual ativo",
     "follow_system": "Voltar a seguir o sistema",
+    "language": "Idioma",
     "photo": "Foto",
     "change_photo": "Trocar foto",
     "camera": "Camera",
@@ -88,5 +89,9 @@
     "photo_failed": "Nao foi possivel enviar a foto",
     "photo_removed": "Foto removida",
     "photo_remove_failed": "Nao foi possivel remover a foto"
+  },
+  "cta": {
+    "close": "Fechar",
+    "cancel": "Cancelar"
   }
 }

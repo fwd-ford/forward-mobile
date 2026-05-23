@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import "@/i18n";
 import { IntroVideo } from "@/components/ui/IntroVideo";
+import { LocaleProvider } from "@/context/LocaleContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
@@ -13,7 +14,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <RootStack />
+        <LocaleProvider>
+          <RootStack />
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

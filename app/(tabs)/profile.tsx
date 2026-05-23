@@ -15,13 +15,16 @@ import { router } from "expo-router";
 
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { LocalePicker } from "@/components/ui/LocalePicker";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
+import { useLocale } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
 import { signOut } from "@/lib/auth";
 import { deleteAvatar, uploadAvatar } from "@/lib/avatar-upload";
 import { haptic } from "@/lib/haptics";
 import { pickFromCamera, pickFromLibrary, type PickedImage } from "@/lib/image-picker";
+import { LOCALE_LABEL, LOCALE_SHORT } from "@/lib/locale";
 import { fetchMyProfile, updateMyProfile, type Profile } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
@@ -34,10 +37,12 @@ type ProfileState = {
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { colors, mode, toggleTheme, isOverridden, resetToSystem } = useTheme();
+  const { locale } = useLocale();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, setState] = useState<ProfileState | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [localePickerOpen, setLocalePickerOpen] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -120,6 +125,11 @@ export default function ProfileScreen() {
   function onResetToSystem() {
     haptic.light();
     resetToSystem();
+  }
+
+  function onOpenLocalePicker() {
+    haptic.light();
+    setLocalePickerOpen(true);
   }
 
   if (!state) {
@@ -240,6 +250,27 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
 
+        <Text style={styles.sectionTitle}>{t("profile.language")}</Text>
+        <Pressable
+          onPress={onOpenLocalePicker}
+          style={({ pressed }) => [styles.localeRow, pressed && styles.pressedSoft]}
+          accessibilityRole="button"
+          accessibilityLabel={`${t("profile.language")}: ${LOCALE_LABEL[locale]}`}
+        >
+          <View style={styles.localeLeft}>
+            <View style={styles.localeIconWrap}>
+              <Ionicons name="globe-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.localeTextos}>
+              <Text style={styles.localeLabel}>{t("profile.language")}</Text>
+              <Text style={styles.localeValue}>
+                {LOCALE_LABEL[locale]} · {LOCALE_SHORT[locale]}
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-down" size={16} color={colors.textSubtle} />
+        </Pressable>
+
         <Text style={styles.sectionTitle}>{t("profile.account")}</Text>
         <View style={styles.actionsCard}>
           <Button label={t("profile.sign_out")} variant="secondary" onPress={onSignOut} />
@@ -251,6 +282,11 @@ export default function ProfileScreen() {
         variant={toast.variant}
         visible={toast.visible}
         onHide={() => setToast((p) => ({ ...p, visible: false }))}
+      />
+
+      <LocalePicker
+        visible={localePickerOpen}
+        onClose={() => setLocalePickerOpen(false)}
       />
     </View>
   );
@@ -445,6 +481,44 @@ function createStyles(c: ThemeColors) {
       ...typography.caption,
       color: c.primary,
       fontWeight: "600",
+    },
+    localeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+      marginHorizontal: spacing.xl,
+      marginBottom: spacing.lg,
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    localeLeft: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    localeIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    localeTextos: { flex: 1 },
+    localeLabel: {
+      ...typography.caption,
+      color: c.textMuted,
+    },
+    localeValue: {
+      ...typography.body,
+      fontWeight: "700",
+      color: c.text,
+      marginTop: 2,
     },
     actionsCard: {
       marginHorizontal: spacing.xl,

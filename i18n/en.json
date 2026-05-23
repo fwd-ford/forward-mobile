@@ -75,6 +75,7 @@
     "theme_auto": "Following system",
     "theme_manual": "Manual override active",
     "follow_system": "Follow system again",
+    "language": "Language",
     "photo": "Photo",
     "change_photo": "Change photo",
     "camera": "Camera",
@@ -84,5 +85,9 @@
     "photo_failed": "Could not upload photo",
     "photo_removed": "Photo removed",
     "photo_remove_failed": "Could not remove photo"
+  },
+  "cta": {
+    "close": "Close",
+    "cancel": "Cancel"
   }
 }
