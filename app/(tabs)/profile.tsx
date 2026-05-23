@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -211,7 +212,12 @@ export default function ProfileScreen() {
 
         <SettingRow
           icon={mode === "dark" ? "moon" : "sunny"}
-          label={mode === "dark" ? t("profile.dark_mode") : t("profile.light_mode")}
+          // Label always describes what the switch CONTROLS ("Dark mode"); the
+          // value line tells you the current setting. Previously the label
+          // mirrored the current mode and reading "Modo claro" + switch OFF
+          // sounded like "turning off light mode" — accidental coincidence.
+          // Label sempre descreve o que o switch controla; value mostra o estado.
+          label={t("profile.dark_mode")}
           value={isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
           emphasis="label"
           right={
@@ -221,6 +227,14 @@ export default function ProfileScreen() {
               trackColor={{ false: colors.borderStrong, true: colors.primary }}
               thumbColor="#FFFFFF"
               ios_backgroundColor={colors.borderStrong}
+              // react-native-web ignores trackColor on the rendered <input type="checkbox">.
+              // accentColor is the native CSS property browsers honor for form-control tint.
+              // No web o trackColor nao se aplica; accentColor e o property CSS que pinta.
+              style={
+                Platform.OS === "web"
+                  ? ({ accentColor: colors.primary } as never)
+                  : undefined
+              }
             />
           }
         />
