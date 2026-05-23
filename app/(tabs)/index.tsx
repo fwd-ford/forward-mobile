@@ -1,3 +1,13 @@
+// Home — Glass Minimalist redesign (Fase 2, screen 2/6).
+// Layout:
+//   label-caps "HOJE" -> Fraunces 40 greeting
+//   GlassSurface hero with 2 KPI columns (active leads + pipeline)
+//   "Leads recentes" Fraunces 28 section header
+//   Lista de LeadCards (LeadCard ja foi migrado pra GlassSurface thin)
+//
+// Header inline per the screen-by-screen workflow; ScreenTitle vira component
+// na Fase 3 quando todas as telas tiverem o mesmo padrao.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -12,18 +22,16 @@ import { useTranslation } from "react-i18next";
 
 import { LeadCard } from "@/components/domain/LeadCard";
 import { LeadCardSkeleton } from "@/components/domain/LeadCardSkeleton";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
 import { getAccessToken } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
-import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 type HeroStats = {
   activeLeads: number;
@@ -32,9 +40,8 @@ type HeroStats = {
 
 const TOP_VISIBLE = 5;
 // Hero stats sao calculados client-side a partir do array retornado por listLeads.
-// Sprint 1 nao tem endpoint dedicado de agregacao (/leads/stats), entao puxamos um
-// teto bem acima da expectativa real por vendedor (~50 leads ativos). Quando o backend
-// expor agregacao, trocar isso por uma chamada dedicada e parar de truncar.
+// Sprint 1 nao tem endpoint dedicado de agregacao (/leads/stats), entao puxamos
+// um teto bem acima da expectativa real por vendedor.
 const HERO_FETCH_LIMIT = 200;
 const GREETING_REFRESH_MS = 60_000;
 
@@ -60,8 +67,6 @@ export default function HomeScreen() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState<string>("");
-  // Reavalia o greeting periodicamente: sem isso o usuario que abre o app as 11h55
-  // ve "Bom dia" ate fechar e reabrir, mesmo passando do meio-dia.
   const [now, setNow] = useState(() => new Date());
 
   const load = useCallback(async () => {
@@ -113,6 +118,8 @@ export default function HomeScreen() {
   const topLeads = useMemo(() => leads.slice(0, TOP_VISIBLE), [leads]);
   const greeting = t(greetingKey(now.getHours()), { name: name || "" });
 
+  const showHero = !(error && leads.length === 0);
+
   return (
     <FlatList
       style={styles.container}
@@ -120,40 +127,39 @@ export default function HomeScreen() {
       keyExtractor={(l) => l.id}
       contentContainerStyle={styles.list}
       refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-        />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
       }
       ListHeaderComponent={
-        <View>
-          <ScreenHeader title={t("home.today")} subtitle={greeting.trim()} />
+        <View style={styles.header}>
+          {/* Label + Fraunces 40 greeting (Mailchimp pattern). */}
+          {/* Label minusculo + titulo Fraunces gigante (padrao Mailchimp). */}
+          <Text style={styles.labelCaps}>{t("home.today")}</Text>
+          <Text style={styles.heroTitle} numberOfLines={2}>
+            {greeting.trim()}
+          </Text>
 
-          {/*
-            Hero hides on initial error with no cached leads: rendering "0 / R$ 0"
-            mid-error reads as real numbers and panics the user. Once any data
-            arrived (e.g. refresh-after-success), keep it visible even if a later
-            refresh errors so stale-but-useful beats blank.
-            Hero some no erro inicial sem leads: "0 / R$ 0" parece dado real e
-            assusta. Com dados em cache, mantem mesmo num erro de refresh.
-          */}
-          {!(error && leads.length === 0) ? (
-            <Card style={styles.hero}>
-              <View style={styles.heroCol}>
-                <Text style={styles.heroLabel}>{t("home.hero.active_leads")}</Text>
-                <Text style={styles.heroValue}>{hero.activeLeads}</Text>
+          {showHero ? (
+            <GlassSurface variant="regular" radius={24} style={styles.heroCard}>
+              <View style={styles.heroInner}>
+                <View style={styles.heroCol}>
+                  <Text style={styles.heroLabel}>{t("home.hero.active_leads")}</Text>
+                  <Text style={styles.heroValue}>{hero.activeLeads}</Text>
+                </View>
+                <View style={styles.heroDivider} />
+                <View style={styles.heroCol}>
+                  <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
+                  <Text style={styles.heroValue}>
+                    {formatBRL(hero.pipelineBRL, { compact: true })}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.heroDivider} />
-              <View style={styles.heroCol}>
-                <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
-                <Text style={styles.heroValue}>{formatBRL(hero.pipelineBRL, { compact: true })}</Text>
-              </View>
-            </Card>
+            </GlassSurface>
           ) : null}
 
           {error && leads.length > 0 ? (
-            <ErrorBanner message={error} onRetry={() => void load()} />
+            <View style={styles.errorWrap}>
+              <ErrorBanner message={error} onRetry={() => void load()} />
+            </View>
           ) : null}
 
           {initialLoading ? (
@@ -162,24 +168,30 @@ export default function HomeScreen() {
               <LeadCardSkeleton />
               <LeadCardSkeleton />
             </View>
+          ) : !initialLoading && topLeads.length > 0 ? (
+            <Text style={styles.sectionTitle}>{t("home.todays_leads")}</Text>
           ) : null}
         </View>
       }
       ListEmptyComponent={
         !initialLoading ? (
           error ? (
-            <EmptyState
-              icon="cloud-offline-outline"
-              title={t("home.error_title")}
-              description={error}
-              action={
-                <Button
-                  label={t("common.retry")}
-                  variant="secondary"
-                  onPress={() => void load()}
-                />
-              }
-            />
+            <View style={styles.emptyWrap}>
+              <EmptyState
+                icon="cloud-offline-outline"
+                title={t("home.error_title")}
+                description={error}
+              />
+              <Pressable
+                onPress={() => void load()}
+                style={({ pressed }) => [
+                  styles.retryPill,
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+                ]}
+              >
+                <Text style={styles.retryPillLabel}>{t("common.retry")}</Text>
+              </Pressable>
+            </View>
           ) : (
             <EmptyState
               icon="briefcase-outline"
@@ -203,69 +215,101 @@ export default function HomeScreen() {
         ) : null
       }
       renderItem={({ item }) => (
-        <LeadCard
-          lead={item}
-          onPress={() =>
-            router.push({
-              pathname: "/lead/[id]",
-              // Hidrata o detalhe na hora pra evitar refetch de 200 leads. Veja lead/[id].tsx.
-              params: { id: item.id, lead: JSON.stringify(item) },
-            })
-          }
-        />
+        <View style={styles.leadItem}>
+          <LeadCard
+            lead={item}
+            onPress={() =>
+              router.push({
+                pathname: "/lead/[id]",
+                params: { id: item.id, lead: JSON.stringify(item) },
+              })
+            }
+          />
+        </View>
       )}
-      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
     />
   );
 }
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { backgroundColor: c.bg },
-    list: { paddingBottom: spacing["4xl"] },
-    hero: {
+    container: { backgroundColor: "transparent" },
+    list: { paddingBottom: spacing["6xl"] },
+    header: {
+      paddingHorizontal: spacing["2xl"],
+      paddingTop: spacing["3xl"],
+      gap: spacing.md,
+    },
+    labelCaps: {
+      ...typography.labelCaps,
+      color: c.textMuted,
+    },
+    heroTitle: {
+      ...typography.hDisplay,
+      color: c.text,
+      marginBottom: spacing.lg,
+    },
+    heroCard: {
+      marginBottom: spacing["2xl"],
+    },
+    heroInner: {
       flexDirection: "row",
       alignItems: "stretch",
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.lg,
-      padding: spacing.lg,
+      padding: spacing.xl,
     },
     heroCol: { flex: 1, gap: spacing.xs },
     heroDivider: {
-      width: 1,
-      backgroundColor: c.separator,
-      marginHorizontal: spacing.md,
+      width: StyleSheet.hairlineWidth,
+      backgroundColor: c.glassBorder,
+      marginHorizontal: spacing.lg,
     },
     heroLabel: {
-      ...typography.label,
+      ...typography.labelCaps,
       color: c.textMuted,
-      textTransform: "uppercase",
     },
     heroValue: {
-      ...typography.mono,
-      fontSize: 28,
+      fontFamily: fontFamily.semibold,
+      fontSize: 32,
+      letterSpacing: -0.6,
       color: c.text,
-      fontWeight: "800",
-      letterSpacing: -0.3,
     },
-    skeletonStack: {
-      gap: spacing.md,
-      paddingHorizontal: spacing.xl,
+    errorWrap: { marginBottom: spacing.lg },
+    skeletonStack: { gap: spacing.md, marginTop: spacing.sm },
+    sectionTitle: {
+      ...typography.hSection,
+      color: c.text,
+      marginTop: spacing.sm,
+      marginBottom: spacing.xs,
+    },
+    leadItem: {
+      marginHorizontal: spacing["2xl"],
+      marginTop: spacing.md,
+    },
+    emptyWrap: { alignItems: "center", marginTop: spacing["2xl"], gap: spacing.lg },
+    retryPill: {
+      paddingVertical: spacing.md - 2,
+      paddingHorizontal: spacing["2xl"],
+      borderRadius: radius.pill,
+      backgroundColor: c.primary,
+    },
+    retryPillLabel: {
+      ...typography.body,
+      fontFamily: fontFamily.semibold,
+      color: c.primaryText,
     },
     seeAll: {
-      marginTop: spacing.lg,
-      marginHorizontal: spacing.xl,
+      marginTop: spacing.xl,
+      marginHorizontal: spacing["2xl"],
       paddingVertical: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.surface,
+      borderRadius: radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.borderStrong,
       alignItems: "center",
     },
     seeAllLabel: {
       ...typography.caption,
-      fontWeight: "700",
-      color: c.primary,
+      fontFamily: fontFamily.semibold,
+      color: c.text,
     },
   });
 }
