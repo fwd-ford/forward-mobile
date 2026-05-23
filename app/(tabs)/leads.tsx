@@ -8,7 +8,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 
@@ -92,7 +91,6 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
 export default function LeadsScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -138,7 +136,7 @@ export default function LeadsScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScreenHeader
         title={t("leads.title")}
         subtitle={
