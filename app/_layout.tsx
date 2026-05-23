@@ -71,7 +71,11 @@ function RootStack() {
   useGuardedRedirect(ready && introDone && themeHydrated, session);
 
   return (
-    <View style={styles.root}>
+    // Solid bg colors.bg before the mesh paints — without this, the system
+    // fallback (white on web, sometimes on RN-screens) flashes through if the
+    // mesh layer is delayed by a frame. Mesh + glass surfaces still render on top.
+    // Bg solido como rede de seguranca; sem isso, branco do sistema pisca.
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
       {/* Mesh sits behind every route so glass surfaces have texture to blur. */}
       {/* Mesh fica atras de tudo pra o glass ter algo pra borrar. */}

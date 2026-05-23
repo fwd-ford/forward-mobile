@@ -1,10 +1,19 @@
+// Tab bar — Glass Minimalist redesign (Fase 2, screen 6/6).
+// Bar is absolute-positioned and uses GlassSurface variant="thick" as the
+// background; expo-router renders the labels/icons on top. Active tint moves
+// from primary (was Ford Blue) to text token so it reads in both modes.
+//
+// Tab bar glass thick flutuando sobre conteudo (estilo iOS).
+
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useCallback } from "react";
 import { StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
+import { fontFamily } from "@/lib/theme";
 
 type TabIconKey = "index" | "leads" | "profile";
 
@@ -32,7 +41,7 @@ export default function TabsLayout() {
       ({ color, size, focused }: TabIconRenderProps) => (
         <Ionicons
           name={focused ? ICONS[key].focused : ICONS[key].unfocused}
-          size={size}
+          size={size - 2}
           color={color}
         />
       ),
@@ -43,14 +52,46 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // react-navigation/bottom-tabs v7 paints the scene container white by
+        // default; without this the mesh background gets covered inside tabs.
+        // sceneStyle no v7 substituiu sceneContainerStyle do v6.
+        sceneStyle: { backgroundColor: "transparent" },
+        // animation 'none' avoids the visible overlap when both scenes are
+        // transparent and the cross-fade momentarily renders both stacked.
+        // Sem isso, a troca de aba mostra ambas as cenas sobrepostas.
+        animation: "none",
         tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.separator,
-          borderTopWidth: StyleSheet.hairlineWidth,
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          elevation: 0,
         },
-        tabBarActiveTintColor: colors.primary,
+        // Hairline divider on top so the glass tab bar reads as detached, not
+        // floating ambiguously over content. tabBarBackground owns the blur.
+        tabBarBackground: () => (
+          <GlassSurface
+            variant="thick"
+            radius={0}
+            border={false}
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: colors.glassBorder,
+              },
+            ]}
+          />
+        ),
+        tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+        tabBarLabelStyle: {
+          fontFamily: fontFamily.semibold,
+          fontSize: 11,
+          letterSpacing: 0.2,
+        },
       }}
     >
       <Tabs.Screen
