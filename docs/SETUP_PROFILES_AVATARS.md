@@ -61,6 +61,10 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- handle_new_user is only meant to fire from the on_auth_user_created trigger.
+-- Revoke EXECUTE from API roles so it cannot be called via /rest/v1/rpc/.
+revoke execute on function public.handle_new_user() from anon, authenticated, public;
+
 -- Backfill any existing users that do not yet have a profile row.
 insert into public.profiles (id, full_name)
 select u.id, u.raw_user_meta_data->>'full_name'
@@ -82,16 +86,16 @@ In the Supabase Dashboard:
 ## 3. Apply storage policies
 
 After creating the bucket, run this SQL to allow authenticated users to
-upload only into their own folder:
+upload only into their own folder.
+
+Note: we deliberately do **not** add a broad SELECT policy on `storage.objects`.
+A public bucket already resolves URLs via the CDN without consulting RLS — a
+SELECT policy would only enable directory listing, which is overreach.
 
 ```sql
--- Anyone (signed in or not) can read avatars — bucket is public read by config.
 -- Only authenticated users can write, and only into their own user-id folder.
-
-create policy "avatars are publicly readable"
-  on storage.objects for select
-  to public
-  using (bucket_id = 'avatars');
+-- No SELECT policy: the bucket is public, URLs resolve without RLS.
+-- Object listing stays blocked.
 
 create policy "users can upload into their own avatar folder"
   on storage.objects for insert
