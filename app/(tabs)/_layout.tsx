@@ -60,6 +60,15 @@ export default function TabsLayout() {
         // transparent and the cross-fade momentarily renders both stacked.
         // Sem isso, a troca de aba mostra ambas as cenas sobrepostas.
         animation: "none",
+        // freezeOnBlur + lazy: react-navigation v7 keeps inactive scenes
+        // mounted by default. With transparent sceneStyle both render at once
+        // visually. freezeOnBlur pauses inactive scenes, lazy delays the first
+        // render of unfocused tabs until they get touched. Together they keep
+        // the swap clean without ghost layers.
+        // Sem isso, cenas inativas ficam visiveis sobrepostas; lazy/freeze
+        // garantem que so a ativa pinta.
+        freezeOnBlur: true,
+        lazy: true,
         tabBarStyle: {
           position: "absolute",
           left: 0,

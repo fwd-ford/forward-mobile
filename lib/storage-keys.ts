@@ -3,7 +3,11 @@
 // Chaves de storage centralizadas; proibido usar string literal nos consumers.
 
 export const STORAGE_KEYS = {
-  THEME: "@forward:theme",
+  // Bumped to v2 when the design system shipped Glass Minimalist with dark as
+  // the canonical default. Old @forward:theme values (potentially "light" from
+  // the previous follow-system behavior) would otherwise hijack the new boot.
+  // Key bumpada pra invalidar overrides antigos quando dark virou default.
+  THEME: "@forward:theme_v2",
   LOCALE: "@forward:locale",
   ONBOARDED: "@forward:onboarded",
   CURRENT_DEALER_ID: "@forward:current_dealer_id",
