@@ -3,6 +3,8 @@
 // useTheme() — never import `palette` directly.
 // Tokens de design: paletas light/dark, espacamento, tipografia, elevacao.
 
+import { Platform } from "react-native";
+
 export type ThemeMode = "light" | "dark";
 
 export type ThemeColors = {
@@ -104,6 +106,11 @@ export const fontFamily = {
   semibold: "System",
   bold: "System",
   extrabold: "System",
+  mono: Platform.select({
+    ios: "Menlo",
+    android: "monospace",
+    default: "ui-monospace",
+  }) as string,
 } as const;
 
 // Weight tokens — paired with fontFamily.System on RN to get bold variants
@@ -214,6 +221,21 @@ export const elevationDark = {
   primary: { borderTopColor: "rgba(255,255,255,0.10)", borderTopWidth: 1 },
 } as const;
 
+// Semantic elevation aliases — usar nas telas em vez de sm/md/lg/primary direto.
+// Card = elemento normal. Sheet = modal/bottom-sheet. Popover = floating action.
+// Aliases semanticos: card / sheet / popover.
+export const elevationAliasLight = {
+  card: elevationLight.sm,
+  sheet: elevationLight.lg,
+  popover: elevationLight.primary,
+} as const;
+
+export const elevationAliasDark = {
+  card: elevationDark.sm,
+  sheet: elevationDark.lg,
+  popover: elevationDark.primary,
+} as const;
+
 export type Elevation = typeof elevationLight | typeof elevationDark;
 
 // Typography helpers que combinam size + weight + lineHeight em um objeto
@@ -221,12 +243,34 @@ export type Elevation = typeof elevationLight | typeof elevationDark;
 // no consumer (cor vem de useTheme()).
 // Helpers de tipografia: spread direto no style.
 export const typography = {
-  h1: { fontSize: fontSize["3xl"], fontWeight: fontWeight.extrabold, lineHeight: 34 },
-  h2: { fontSize: fontSize["2xl"], fontWeight: fontWeight.bold, lineHeight: 28 },
+  h1: {
+    fontSize: fontSize["3xl"],
+    fontWeight: fontWeight.extrabold,
+    lineHeight: 34,
+    letterSpacing: -0.4,
+  },
+  h2: {
+    fontSize: fontSize["2xl"],
+    fontWeight: fontWeight.bold,
+    lineHeight: 28,
+    letterSpacing: -0.3,
+  },
   h3: { fontSize: fontSize.xl, fontWeight: fontWeight.semibold, lineHeight: 24 },
   body: { fontSize: fontSize.lg, fontWeight: fontWeight.regular, lineHeight: 22 },
   caption: { fontSize: fontSize.md, fontWeight: fontWeight.regular, lineHeight: 18 },
   label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, letterSpacing: 0.5 },
+  mono: {
+    fontFamily: fontFamily.mono,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: 0,
+  },
+  monoSmall: {
+    fontFamily: fontFamily.mono,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0,
+  },
 } as const;
 
 // Status palette: estados de lead (mapeia 1:1 com api Lead.status).
