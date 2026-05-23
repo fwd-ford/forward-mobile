@@ -22,12 +22,21 @@
     "profile": "Profile"
   },
   "home": {
-    "greeting": "Hello",
+    "greeting_morning": "Good morning, {{name}}",
+    "greeting_afternoon": "Good afternoon, {{name}}",
+    "greeting_evening": "Good evening, {{name}}",
+    "today": "Today",
     "todays_leads": "Today's leads",
     "empty": "No leads at the moment",
     "empty_title": "No leads yet",
     "empty_description": "When new leads are assigned to you, they will show up here.",
-    "error": "Failed to load data"
+    "error": "Failed to load data",
+    "hero": {
+      "active_leads": "Active leads",
+      "pipeline": "Pipeline"
+    },
+    "see_all": "See all leads",
+    "see_all_with_count": "See all {{count}} leads"
   },
   "loading": {
     "profile": "Loading profile"
