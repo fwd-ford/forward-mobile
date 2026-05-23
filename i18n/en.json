@@ -60,14 +60,15 @@
   },
   "leads": {
     "title": "Leads",
-    "subtitle_count": "{{count}} active",
     "subtitle_count_one": "{{count}} active",
+    "subtitle_count_other": "{{count}} active",
+    "subtitle_showing": "Showing {{showing}} of {{total}}",
     "search_placeholder": "Search by VIN or reason",
     "filter": {
       "all": "All",
       "critical": "Critical",
       "today": "Today",
-      "no_contact": "No contact 30d+"
+      "forgotten": "Forgotten 30d+"
     },
     "empty_search_title": "Nothing found",
     "empty_search_description": "No leads for '{{query}}'. Try a partial VIN or another filter."

@@ -20,13 +20,29 @@ import { Input } from "@/components/ui/Input";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
-import { api, ApiError, type Lead } from "@/lib/api";
+import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { getAccessToken } from "@/lib/session";
 import { radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
-type FilterKey = "all" | "critical" | "today" | "no_contact";
+type FilterKey = "all" | "critical" | "today" | "forgotten";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseTimestamp(s: string | undefined): number | null {
+  if (!s) return null;
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? t : null;
+}
+
+function startOfTodayMs(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function normalize(s: string): string {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
 
 function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
   let out = leads;
@@ -36,15 +52,24 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
       out = out.filter((l) => l.priority === "critical");
       break;
     case "today": {
-      const cutoff = Date.now() - DAY_MS;
-      out = out.filter((l) => Date.parse(l.created_at) >= cutoff);
+      // Hoje = a partir do inicio do dia local, nao "ultimas 24h".
+      const cutoff = startOfTodayMs();
+      out = out.filter((l) => {
+        const t = parseTimestamp(l.created_at);
+        return t !== null && t >= cutoff;
+      });
       break;
     }
-    case "no_contact": {
+    case "forgotten": {
+      // Proxy para "sem follow-up ha >=30d": status ainda nao avancou
+      // (new/assigned) e created_at >=30d atras. Quando o backend expor
+      // last_contact_at, trocar pra esse campo.
       const cutoff = Date.now() - 30 * DAY_MS;
-      out = out.filter(
-        (l) => l.status !== "contacted" && l.status !== "converted" && Date.parse(l.created_at) <= cutoff,
-      );
+      out = out.filter((l) => {
+        if (l.status === "contacted" || l.status === "converted") return false;
+        const t = parseTimestamp(l.created_at);
+        return t !== null && t <= cutoff;
+      });
       break;
     }
     case "all":
@@ -52,12 +77,12 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
       break;
   }
 
-  const q = query.trim().toLowerCase();
+  const q = normalize(query.trim());
   if (q.length > 0) {
     out = out.filter(
       (l) =>
-        (l.vin ?? "").toLowerCase().includes(q) ||
-        (l.reason ?? "").toLowerCase().includes(q),
+        normalize(l.vin ?? "").includes(q) ||
+        normalize(l.reason ?? "").includes(q),
     );
   }
 
@@ -102,9 +127,10 @@ export default function LeadsScreen() {
 
   const filtered = useMemo(() => applyFilters(leads, filter, query), [leads, filter, query]);
   const activeCount = useMemo(
-    () => leads.filter((l) => l.status !== "lost" && l.status !== "expired").length,
+    () => leads.filter((l) => ACTIVE_LEAD_STATUSES.has(l.status)).length,
     [leads],
   );
+  const isFiltering = filter !== "all" || query.trim().length > 0;
 
   function onFilterPress(k: FilterKey) {
     haptic.selection();
@@ -116,8 +142,8 @@ export default function LeadsScreen() {
       <ScreenHeader
         title={t("leads.title")}
         subtitle={
-          activeCount === 1
-            ? t("leads.subtitle_count_one", { count: activeCount })
+          isFiltering
+            ? t("leads.subtitle_showing", { showing: filtered.length, total: activeCount })
             : t("leads.subtitle_count", { count: activeCount })
         }
       />
@@ -134,9 +160,10 @@ export default function LeadsScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.chips}
         >
-          {(["all", "critical", "today", "no_contact"] as FilterKey[]).map((k) => {
+          {(["all", "critical", "today", "forgotten"] as FilterKey[]).map((k) => {
             const active = filter === k;
             return (
               <Pressable
