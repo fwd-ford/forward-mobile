@@ -1,5 +1,9 @@
 {
   "app": { "name": "ForwardService" },
+  "common": {
+    "retry": "Try again",
+    "coming_soon": "Coming soon"
+  },
   "intro": { "skip": "Skip" },
   "auth": {
     "sign_in": "Sign in",
@@ -89,5 +93,12 @@
   "cta": {
     "close": "Close",
     "cancel": "Cancel"
+  },
+  "time": {
+    "now": "now",
+    "minutes_ago": "{{count}}m ago",
+    "hours_ago": "{{count}}h ago",
+    "days_ago": "{{count}} day ago",
+    "days_ago_plural": "{{count}} days ago"
   }
 }

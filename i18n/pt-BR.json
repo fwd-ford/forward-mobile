@@ -2,6 +2,10 @@
   "app": {
     "name": "ForwardService"
   },
+  "common": {
+    "retry": "Tentar de novo",
+    "coming_soon": "Em breve"
+  },
   "intro": {
     "skip": "Pular"
   },
@@ -93,5 +97,12 @@
   "cta": {
     "close": "Fechar",
     "cancel": "Cancelar"
+  },
+  "time": {
+    "now": "agora",
+    "minutes_ago": "há {{count}} min",
+    "hours_ago": "há {{count}}h",
+    "days_ago": "há {{count}} dia",
+    "days_ago_plural": "há {{count}} dias"
   }
 }
