@@ -39,7 +39,6 @@
       "active_leads": "Leads ativos",
       "pipeline": "Pipeline"
     },
-    "see_all": "Ver todos os leads",
     "see_all_with_count": "Ver todos os {{count}} leads"
   },
   "loading": {

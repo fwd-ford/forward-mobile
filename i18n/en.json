@@ -35,7 +35,6 @@
       "active_leads": "Active leads",
       "pipeline": "Pipeline"
     },
-    "see_all": "See all leads",
     "see_all_with_count": "See all {{count}} leads"
   },
   "loading": {

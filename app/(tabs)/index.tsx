@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { useTheme } from "@/context/ThemeContext";
-import { api, ApiError, type Lead } from "@/lib/api";
+import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { fetchMyProfile } from "@/lib/profile";
 import { getAccessToken } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
@@ -30,6 +30,12 @@ type HeroStats = {
 };
 
 const TOP_VISIBLE = 5;
+// Hero stats sao calculados client-side a partir do array retornado por listLeads.
+// Sprint 1 nao tem endpoint dedicado de agregacao (/leads/stats), entao puxamos um
+// teto bem acima da expectativa real por vendedor (~50 leads ativos). Quando o backend
+// expor agregacao, trocar isso por uma chamada dedicada e parar de truncar.
+const HERO_FETCH_LIMIT = 200;
+const GREETING_REFRESH_MS = 60_000;
 
 function greetingKey(hour: number): "home.greeting_morning" | "home.greeting_afternoon" | "home.greeting_evening" {
   if (hour < 12) return "home.greeting_morning";
@@ -38,7 +44,7 @@ function greetingKey(hour: number): "home.greeting_morning" | "home.greeting_aft
 }
 
 function computeHeroStats(leads: Lead[]): HeroStats {
-  const activeLeads = leads.filter((l) => l.status !== "lost" && l.status !== "expired").length;
+  const activeLeads = leads.filter((l) => ACTIVE_LEAD_STATUSES.has(l.status)).length;
   const pipelineBRL = leads.reduce((sum, l) => sum + (l.expected_value_brl ?? 0), 0);
   return { activeLeads, pipelineBRL };
 }
@@ -66,12 +72,15 @@ export default function HomeScreen() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState<string>("");
+  // Reavalia o greeting periodicamente: sem isso o usuario que abre o app as 11h55
+  // ve "Bom dia" ate fechar e reabrir, mesmo passando do meio-dia.
+  const [now, setNow] = useState(() => new Date());
 
   const load = useCallback(async () => {
     setError(null);
     try {
       const token = (await getAccessToken()) ?? undefined;
-      const data = await api.listLeads({ limit: 50 }, token);
+      const data = await api.listLeads({ limit: HERO_FETCH_LIMIT }, token);
       setLeads(data);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("home.error"));
@@ -98,6 +107,11 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), GREETING_REFRESH_MS);
+    return () => clearInterval(id);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -106,14 +120,14 @@ export default function HomeScreen() {
 
   const hero = useMemo(() => computeHeroStats(leads), [leads]);
   const topLeads = useMemo(() => leads.slice(0, TOP_VISIBLE), [leads]);
-  const greeting = t(greetingKey(new Date().getHours()), { name: name || "" });
+  const greeting = t(greetingKey(now.getHours()), { name: name || "" });
 
   return (
     <FlatList
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
       data={initialLoading ? [] : topLeads}
       keyExtractor={(l) => l.id}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, { paddingTop: insets.top }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -162,7 +176,6 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => router.push("/leads")}
             accessibilityRole="button"
-            accessibilityLabel={t("home.see_all_with_count", { count: leads.length })}
             style={({ pressed }) => [styles.seeAll, pressed && { opacity: 0.7 }]}
           >
             <Text style={styles.seeAllLabel}>

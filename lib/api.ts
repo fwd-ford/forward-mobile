@@ -67,6 +67,17 @@ export interface Lead {
   created_at: string;
 }
 
+export type LeadStatus = Lead["status"];
+
+// Active = ainda no funil. Excluir explicitamente os terminais protege contra
+// novos status surgirem no backend e silenciosamente quebrarem a contagem.
+export const ACTIVE_LEAD_STATUSES: ReadonlySet<LeadStatus> = new Set([
+  "new",
+  "assigned",
+  "contacted",
+  "converted",
+]);
+
 export interface ChurnScore {
   id: string;
   customer_id: string;
