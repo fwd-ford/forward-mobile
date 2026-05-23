@@ -1,12 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
+import {
+  Fraunces_400Regular,
+  Fraunces_600SemiBold,
+  Fraunces_700Bold,
+} from "@expo-google-fonts/fraunces";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 
 import "@/i18n";
 import { IntroVideo } from "@/components/ui/IntroVideo";
+import { MeshBackground } from "@/components/ui/MeshBackground";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
@@ -29,9 +42,20 @@ function RootStack() {
   const [introDone, setIntroDone] = useState(false);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  // Preload Ionicons so the first paint never shows empty glyph squares (FOIT).
-  // Pre-carrega Ionicons; sem isso, primeiro paint mostra quadrados vazios.
-  const [fontsLoaded] = useFonts(Ionicons.font);
+  // Preload Ionicons + Fraunces (display serif) + Inter (UI sans) so first
+  // paint never shows fallback fonts or empty glyph squares (FOIT).
+  // Pre-carrega Ionicons + Fraunces + Inter; sem isso, primeiro paint usa
+  // fonte de sistema e estraga a hierarquia tipografica.
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+    Fraunces_400Regular,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   // Auth check runs in parallel with the intro — whichever finishes later unblocks the router.
   // Verificacao de sessao roda em paralelo com a intro — o mais lento destrava o router.
@@ -47,16 +71,22 @@ function RootStack() {
   useGuardedRedirect(ready && introDone && themeHydrated, session);
 
   return (
-    <>
+    <View style={styles.root}>
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
+      {/* Mesh sits behind every route so glass surfaces have texture to blur. */}
+      {/* Mesh fica atras de tudo pra o glass ter algo pra borrar. */}
+      <MeshBackground />
       {!introDone ? (
         <IntroVideo onFinished={() => setIntroDone(true)} />
       ) : !ready || !themeHydrated || !fontsLoaded ? null : (
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
+            // contentStyle transparent so MeshBackground shows through every route.
+            // contentStyle transparente: deixa o MeshBackground aparecer atras.
+            headerStyle: { backgroundColor: "transparent" },
+            headerTransparent: true,
             headerTintColor: colors.text,
-            contentStyle: { backgroundColor: colors.bg },
+            contentStyle: { backgroundColor: "transparent" },
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -64,9 +94,13 @@ function RootStack() {
           <Stack.Screen name="lead/[id]" options={{ title: "Lead" }} />
         </Stack>
       )}
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
 
 // useGuardedRedirect sends unauthenticated users to /login and authenticated
 // users away from /login to the tab root.
