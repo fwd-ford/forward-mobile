@@ -18,8 +18,8 @@ App React Native + Expo voltado para o **atendente da concessionária**: ele abr
 3. [Demonstração Visual](#3-demonstração-visual)
 4. [Como Rodar o Projeto](#4-como-rodar-o-projeto)
 5. [Decisões Técnicas](#5-decisões-técnicas)
-6. [Próximos Passos](#6-próximos-passos) _(próximo commit)_
-7. [Apêndice — Conventions & Troubleshooting](#7-apêndice--conventions--troubleshooting) _(próximo commit)_
+6. [Próximos Passos](#6-próximos-passos)
+7. [Apêndice — Conventions & Troubleshooting](#7-apêndice--conventions--troubleshooting)
 
 ---
 
@@ -378,6 +378,90 @@ npm run lint           # ESLint
 ```
 
 CI roda **Gitleaks** em todo push para impedir vazamento de credenciais. Type check é validado em cada PR.
+
+---
+
+## 6. Próximos Passos
+
+Funcionalidades planejadas para sprints futuros (Sprint 2+):
+
+### Curto prazo (Sprint 2)
+
+- [ ] **Vista 360 completa** — histórico de manutenção do veículo, valor médio de ticket, último contato registrado
+- [ ] **WhatsApp via N8N** — botão "Mensagem" dispara workflow no N8N que envia mensagem pelo número oficial da concessionária
+- [ ] **Marcar contato** persistido — histórico de outreach gravado e visível para o atendente seguinte
+- [ ] **Push notifications** via `expo-notifications` — atendente recebe alerta quando lead crítico cai na sua fila
+- [ ] **Modo offline** com `@tanstack/react-query` — leitura de leads em cache para situações de Wi-Fi instável na concessionária
+
+### Médio prazo (Sprint 3+)
+
+- [ ] **Modo cliente final** — interface separada para o dono do veículo, com agendamento, status de revisão e Ford Care
+- [ ] **Onboarding interativo** — 3 slides explicando o uso na primeira abertura
+- [ ] **Biometria** (`expo-local-authentication`) — desbloqueio rápido com Face ID / Touch ID
+- [ ] **Métricas individuais** — dashboard pessoal do atendente: leads recuperados, ticket médio, taxa de conversão
+- [ ] **Tema dinâmico por concessionária** — co-branding leve via env
+
+### Diferenciais técnicos planejados
+
+- [ ] **Compartilhamento de relatório** via `expo-sharing` (PDF do lead para enviar ao gestor)
+- [ ] **Acelerômetro** para gesture "shake to refresh" em telas de listagem (já que o spec valoriza uso de sensores)
+- [ ] **Geolocalização** (`expo-location`) — sugerir leads próximos à concessionária
+
+---
+
+## 7. Apêndice — Conventions & Troubleshooting
+
+### 7.1 Convenções de código
+
+- **User-facing strings sempre via `t("key")`** — nunca hardcoded. Quebra o i18n se for hardcoded.
+- **Imports via alias `@/...`** — configurado em `tsconfig.json`. Evita `../../../`.
+- **Componentes tipados com interface explícita** — nada de `any`.
+- **Decisões de design vivem em `lib/theme.ts`** — editar lá, não inline.
+- **Helpers canônicos:**
+  - `formatBRL(value)` para moeda
+  - `ACTIVE_LEAD_STATUSES` (Set canônico de status ativos)
+  - `friendlyDisplayName({ fullName, email })` para greeting
+  - `toFriendlyFirstName(name)` para primeiro nome
+
+### 7.2 Troubleshooting
+
+| Sintoma | Causa provável | Fix |
+|---------|---------------|-----|
+| Expo Go mostra "Network response timed out" | Device em Wi-Fi diferente do PC | Verificar mesma rede; usar IP LAN em `.env` |
+| App carrega mas "Não autenticado" | `EXPO_PUBLIC_API_URL` errado ou backend off | `curl <API_URL>/health` → deve retornar `{"status":"UP"}` |
+| Fontes Fraunces/Inter não carregam | Conexão lenta no primeiro load | Pull-to-refresh em qualquer tela; `useFonts()` cacheia |
+| Cor errada após trocar tema | Cache do Metro | `npm run start -- --clear` |
+| Web em Windows mostra fonte serif estranha em KPIs | `SF Mono` / `JetBrains Mono` não instaladas localmente | Fallback usa Consolas (Win11) ou monospace genérico — esperado |
+| Hot reload não funciona em emulador Android | Porto bloqueado | `adb reverse tcp:8081 tcp:8081` |
+| CORS error no web | Backend não tem `http://localhost:8081` em `ALLOWED_ORIGINS` | Adicionar no `.env` do `forward-api-java` |
+
+### 7.3 Configuração de ambiente
+
+Toda env var é opcional. Default aponta para produção (veja `app.config.js`).
+
+| Variável | Default | Quando setar |
+|----------|---------|--------------|
+| `EXPO_PUBLIC_API_URL` | `https://forward-api-java.fly.dev` | Backend local ou staging |
+| `EXPO_PUBLIC_SUPABASE_URL` | `https://ysewoopjgdpvnkfhffgy.supabase.co` | Outro projeto Supabase |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | embarcado em `app.json:extra` | Outro projeto Supabase |
+
+`.env` está em `.gitignore`. O `app.json` carrega a anon key publicável da Supabase — ok comitar (é a chave anon, não service role).
+
+### 7.4 Repositórios relacionados
+
+| Repo | Função |
+|------|--------|
+| [`forward-api-java`](https://github.com/fwd-ford/forward-api-java) | Backend REST + SOAP (Spring Boot 3) que este app consome |
+| [`forward-ml`](https://github.com/fwd-ford/forward-ml) | Pipeline de ML — segmentação + churn score |
+| [`forward-web`](https://github.com/fwd-ford/forward-web) | Dashboard analítico web (SvelteKit) — visão do gestor |
+| [`forward-infra`](https://github.com/fwd-ford/forward-infra) | Migrations SQL + docker compose para ambiente local |
+| [`forward-docs`](https://github.com/fwd-ford/forward-docs) | Documentação acadêmica, OpenAPI mirror, ADRs |
+
+### 7.5 Histórico de QA
+
+Três rodadas de QA foram executadas com Playwright (web target), pegando 6 P0 + 8 P1 + 6 P2 ao longo do Sprint 1. Todos os P0 e P1 foram fechados antes da entrega. Relatórios:
+
+- [`docs/superpowers/UX_QA_REPORT.md`](docs/superpowers/UX_QA_REPORT.md) — round 1 (pré-fixes)
 
 ---
 
