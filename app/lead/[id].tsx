@@ -149,7 +149,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.scroll, { paddingTop: insets.top + spacing["4xl"] }]}>
+        <View style={[styles.scroll, { paddingTop: insets.top + spacing["3xl"] }]}>
           <Skeleton width={120} height={14} borderRadius={radius.sm} />
           <Skeleton width={240} height={32} borderRadius={radius.sm} />
           <View style={styles.skeletonRow}>
@@ -167,7 +167,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["4xl"] }]}>
+        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["3xl"] }]}>
           <ErrorBanner message={error} onRetry={() => void load()} />
         </View>
       </View>
@@ -196,7 +196,7 @@ export default function LeadDetailScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + spacing["4xl"],
+            paddingTop: insets.top + spacing["3xl"],
             paddingBottom: insets.bottom + footerHeight + spacing.lg,
           },
         ]}
@@ -207,6 +207,10 @@ export default function LeadDetailScreen() {
           {lead.vin ?? "—"}
         </Text>
 
+        {/* Priority como badge filled (urgencia comunica visualmente);
+            status como dot+label (mesma convencao do LeadCard) — antes
+            os dois eram badges identicos e o leitor nao sabia o que era
+            o que. */}
         <View style={styles.badgesRow}>
           <View
             style={[styles.badge, { backgroundColor: priority.bg, borderColor: priority.border }]}
@@ -215,12 +219,9 @@ export default function LeadDetailScreen() {
               {t(priority.labelKey)}
             </Text>
           </View>
-          <View
-            style={[styles.badge, { backgroundColor: status.bg, borderColor: status.border }]}
-          >
-            <Text style={[styles.badgeLabel, { color: status.color }]}>
-              {t(status.labelKey)}
-            </Text>
+          <View style={styles.statusGroup}>
+            <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+            <Text style={styles.statusLabel}>{t(status.labelKey)}</Text>
           </View>
         </View>
 
@@ -302,7 +303,7 @@ function createStyles(c: ThemeColors) {
     container: { flex: 1, backgroundColor: "transparent" },
     scroll: {
       paddingHorizontal: spacing["2xl"],
-      gap: spacing.md,
+      gap: spacing.sm,
     },
     backPillFloat: {
       position: "absolute",
@@ -338,7 +339,8 @@ function createStyles(c: ThemeColors) {
     },
     badgesRow: {
       flexDirection: "row",
-      gap: spacing.sm,
+      alignItems: "center",
+      gap: spacing.md,
     },
     badge: {
       paddingHorizontal: spacing.md,
@@ -350,6 +352,21 @@ function createStyles(c: ThemeColors) {
       ...typography.label,
       textTransform: "uppercase",
       letterSpacing: 0.6,
+    },
+    statusGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs + 2,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    statusLabel: {
+      ...typography.caption,
+      color: c.textMuted,
+      fontWeight: "600",
     },
     metaLine: {
       ...typography.caption,

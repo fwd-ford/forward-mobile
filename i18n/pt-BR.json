@@ -34,7 +34,7 @@
     "greeting_afternoon": "Boa tarde, {{name}}",
     "greeting_evening": "Boa noite, {{name}}",
     "today": "Hoje",
-    "todays_leads": "Leads de hoje",
+    "recent_leads": "Leads recentes",
     "empty": "Nenhum lead no momento",
     "empty_title": "Sem leads por enquanto",
     "empty_description": "Quando novos leads forem atribuídos a você, eles aparecem aqui.",

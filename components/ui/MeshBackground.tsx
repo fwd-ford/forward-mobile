@@ -25,10 +25,14 @@ const MESH: Record<"light" | "dark", MeshConfig> = {
     bottom: ["rgba(30, 30, 35, 0)", "rgba(22, 22, 22, 0.45)"],
   },
   light: {
-    base: "#F0F0F2",
-    topLeft: ["rgba(220, 220, 235, 0.50)", "rgba(220, 220, 235, 0)"],
-    topRight: ["rgba(245, 240, 235, 0.35)", "rgba(245, 240, 235, 0)"],
-    bottom: ["rgba(240, 240, 242, 0)", "rgba(240, 240, 242, 0.40)"],
+    // Antes: gradientes quase no mesmo tom da base (#F0F0F2 + 220,220,235)
+    // ficavam ~6 unidades de diferenca — invisivel ao olho. Agora: azul
+    // Ford-soft no topo-esquerdo, warm cream no topo-direito, vinheta
+    // cinza no rodape. Opacities maiores pra render real.
+    base: "#F4F5F8",
+    topLeft: ["rgba(176, 198, 230, 0.55)", "rgba(176, 198, 230, 0)"],
+    topRight: ["rgba(246, 224, 200, 0.45)", "rgba(246, 224, 200, 0)"],
+    bottom: ["rgba(210, 212, 220, 0)", "rgba(198, 200, 210, 0.55)"],
   },
 };
 

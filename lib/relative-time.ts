@@ -53,9 +53,13 @@ export function formatRelativeTime(
       : t("time.days_ago_plural", { count });
   }
 
-  // Older than a week — short date "DD/MM"
+  // Older than a week — short date. Mostra ano so quando difere do corrente
+  // pra evitar ambiguidade entre datas do ano atual e anteriores.
   const d = new Date(target);
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${dd}/${mm}`;
+  const targetYear = d.getFullYear();
+  const nowYear = new Date(now).getFullYear();
+  if (targetYear === nowYear) return `${dd}/${mm}`;
+  return `${dd}/${mm}/${String(targetYear).slice(-2)}`;
 }

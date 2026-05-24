@@ -173,7 +173,7 @@ export default function HomeScreen() {
               <LeadCardSkeleton />
             </View>
           ) : !initialLoading && topLeads.length > 0 ? (
-            <Text style={styles.sectionTitle}>{t("home.todays_leads")}</Text>
+            <Text style={styles.sectionTitle}>{t("home.recent_leads")}</Text>
           ) : null}
         </View>
       }
