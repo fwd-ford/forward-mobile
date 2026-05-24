@@ -136,7 +136,10 @@ export default function LoginScreen() {
             { opacity, transform: [{ translateY }, { scale }] },
           ]}
         >
+          {/* Wordmark Ford pequeno (Inter — assinatura da marca, fica sans).
+              Hero principal vem em Fraunces, consistente com Home/Leads/Profile. */}
           <Text style={styles.brand}>FORD</Text>
+          <Text style={styles.heroTitle}>{t("auth.welcome")}</Text>
           <Text style={styles.tagline}>{t("auth.subtitle")}</Text>
         </Animated.View>
 
@@ -165,7 +168,7 @@ export default function LoginScreen() {
             label={t("auth.password")}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••"
+            placeholder=""
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
@@ -281,7 +284,16 @@ function UnderlineInput({
         onBlur={onBlur}
         style={[
           inputStyles.input,
-          { color: colors.text, borderBottomColor: lineColor },
+          {
+            color: colors.text,
+            borderBottomColor: lineColor,
+            // Erro: dobra a espessura pra dar destaque (antes ficava igual
+            // ao estado neutro, so a mensagem abaixo virava vermelha).
+            borderBottomWidth: error ? 1.5 : StyleSheet.hairlineWidth + 0.5,
+          },
+          // Remove o outline DOM do browser no web (input password ganhava
+          // box de focus que email nao mostrava — inconsistencia visual).
+          Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null,
         ]}
       />
       {error ? (
@@ -315,24 +327,37 @@ function createStyles(c: ThemeColors) {
     scroll: {
       flexGrow: 1,
       paddingHorizontal: spacing["2xl"],
-      justifyContent: "space-between",
+      // justifyContent removido — antes era space-between, gerando ~30% de
+      // espaco morto entre form e footer. Form agora flui logo abaixo do
+      // hero; footer continua no fim por marginTop auto.
     },
     header: {
       alignItems: "flex-start",
-      marginBottom: spacing["4xl"],
-      gap: spacing.lg,
+      marginBottom: spacing["2xl"],
+      gap: spacing.xs,
     },
     brand: {
+      // Wordmark Ford reduzido — assinatura da marca, nao hero.
+      // Antes: 72pt Inter Bold dominando a tela inteira.
       fontFamily: fontFamily.bold,
-      fontSize: 72,
-      letterSpacing: -2,
+      fontSize: 18,
+      letterSpacing: 2,
+      color: c.textMuted,
+      marginBottom: spacing.md,
+    },
+    heroTitle: {
+      // Hero serif consistente com Home ("Boa tarde"), Leads, Profile.
+      fontFamily: fontFamily.displayBold,
+      fontSize: 48,
+      letterSpacing: -0.8,
       color: c.text,
-      lineHeight: 72,
+      lineHeight: 52,
     },
     tagline: {
       ...typography.bodyLg,
       color: c.textMuted,
       maxWidth: 320,
+      marginTop: spacing.xs,
     },
     form: { width: "100%" },
     serverErrorText: {
@@ -340,7 +365,7 @@ function createStyles(c: ThemeColors) {
       color: c.error,
       marginTop: spacing.sm,
     },
-    footer: { gap: spacing.sm, marginTop: spacing["3xl"] },
+    footer: { gap: spacing.sm, marginTop: "auto", paddingTop: spacing["3xl"] },
     pillCTA: {
       height: 56,
       borderRadius: radius.pill,
