@@ -15,7 +15,7 @@ App React Native + Expo voltado para o **atendente da concessionária**: ele abr
 
 1. [Sobre o Projeto](#1-sobre-o-projeto)
 2. [Integrantes do Grupo](#2-integrantes-do-grupo)
-3. [Demonstração Visual](#3-demonstração-visual) _(próximo commit)_
+3. [Demonstração Visual](#3-demonstração-visual)
 4. [Como Rodar o Projeto](#4-como-rodar-o-projeto) _(próximo commit)_
 5. [Decisões Técnicas](#5-decisões-técnicas) _(próximo commit)_
 6. [Próximos Passos](#6-próximos-passos) _(próximo commit)_
@@ -102,6 +102,60 @@ Funcionalidades que **estão preparadas mas dependem do backend** (Sprint 2):
 > **Turma:** 3º ano — Engenharia de Software FIAP
 > **Disciplina:** Mobile Development & IoT — Prof. Hércules Ramos
 > **Sprint:** 1 (única do semestre) — entrega 24/05/2026
+
+---
+
+## 3. Demonstração Visual
+
+> **Atenção avaliador:** todas as prints abaixo foram tiradas do app rodando via Expo (web target), com dados reais vindos do `forward-api-java` em produção (Fly.io). Cada tela é mostrada em modo **escuro** e **claro** para comprovar o suporte dual ao tema.
+
+### 3.1 Fluxo principal em GIF
+
+> _GIF do fluxo principal (login → home → leads → detalhe → registrar contato) será adicionado aqui antes da gravação do vídeo final._
+
+📁 [`docs/screenshots/`](docs/screenshots/)
+
+### 3.2 Login
+
+O atendente entra com seu email corporativo. A validação é inline; erros vêm como toast no topo. A logomarca **FORD** e o nome **ForwardService** aparecem em tipografia serif (Fraunces) para reforçar a identidade do produto.
+
+| Dark | Light |
+|------|-------|
+| ![Login escuro](docs/screenshots/01-login-dark.png) | ![Login claro](docs/screenshots/01-login-light.png) |
+
+### 3.3 Home (Dashboard)
+
+Saudação contextual ("Boa tarde, Jvfranco08") + dois KPIs que respondem "o que eu preciso fazer hoje?": **Leads Ativos** (quantos casos abertos atribuídos a mim) e **Pipeline** (valor estimado em BRL — formatado em "k"/"M" para evitar overflow). Lista de leads recentes ordenada por prioridade.
+
+| Dark | Light |
+|------|-------|
+| ![Home escura](docs/screenshots/02-home-dark.png) | ![Home clara](docs/screenshots/02-home-light.png) |
+
+### 3.4 Leads
+
+Lista completa com 4 filtros via chips (mostram contagem em tempo real) e busca por VIN ou motivo. Cada card mostra prioridade colorida (ALTA / CRÍTICA / MÉDIA / BAIXA), VIN, razão do score, status e pipeline.
+
+| Dark |
+|------|
+| ![Leads escura](docs/screenshots/03-leads-dark.png) |
+
+> _Print clara de Leads será adicionada antes da entrega final (em geração)._
+
+### 3.5 Detalhe do Lead (Vista 360 v1)
+
+VIN no topo, badges de prioridade e status, "Por que este lead" (razão do score do modelo de ML), pipeline esperado. As três ações de outreach ficam num footer fixo: **Ligar**, **Mensagem**, **Marcar contato**.
+
+| Dark | Light |
+|------|-------|
+| ![Detalhe escuro](docs/screenshots/04-lead-detail-dark.png) | ![Detalhe claro](docs/screenshots/04-lead-detail-light.png) |
+
+### 3.6 Perfil
+
+Avatar circular com badge de upload (toca para abrir Câmera ou Galeria), nome amigável + email, toggle de **Modo escuro** com opção "Usar tema do sistema", picker de **Idioma** (PT-BR / EN) e ação destrutiva de **Sair**.
+
+| Dark | Light |
+|------|-------|
+| ![Perfil escuro](docs/screenshots/05-profile-dark.png) | ![Perfil claro](docs/screenshots/05-profile-light.png) |
 
 ---
 
