@@ -130,6 +130,17 @@ export default function LeadsScreen() {
     () => leads.filter((l) => ACTIVE_LEAD_STATUSES.has(l.status)).length,
     [leads],
   );
+  // Counts per filter ANTES do search query — chips mostram o universo
+  // disponivel, search filtra em cima do filter ativo.
+  const filterCounts = useMemo(
+    () => ({
+      all: applyFilters(leads, "all", "").length,
+      critical: applyFilters(leads, "critical", "").length,
+      today: applyFilters(leads, "today", "").length,
+      forgotten: applyFilters(leads, "forgotten", "").length,
+    }),
+    [leads],
+  );
   const isFiltering = filter !== "all" || query.trim().length > 0;
   // Mirror Home: when fetch fails with no cached data, swap the search+chips
   // header + ErrorBanner combo for a full-screen EmptyState + retry pill so
@@ -218,6 +229,17 @@ export default function LeadsScreen() {
                         ]}
                       >
                         {t(f.labelKey)}
+                        {filterCounts[f.key] > 0 ? (
+                          <Text
+                            style={[
+                              styles.chipCount,
+                              { color: active ? colors.primaryText : colors.textMuted },
+                            ]}
+                          >
+                            {"  "}
+                            {filterCounts[f.key]}
+                          </Text>
+                        ) : null}
                       </Text>
                     </Wrapper>
                   </Pressable>
@@ -348,6 +370,11 @@ function createStyles(c: ThemeColors) {
     chipActive: {
       backgroundColor: c.primary,
       borderWidth: 0,
+    },
+    chipCount: {
+      ...typography.label,
+      fontFamily: fontFamily.semibold,
+      opacity: 0.8,
     },
     chipLabel: {
       ...typography.caption,
