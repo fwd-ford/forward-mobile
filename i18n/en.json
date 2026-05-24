@@ -65,6 +65,7 @@
     "section": {
       "reason": "Why this lead",
       "value": "Expected pipeline",
+      "customer": "Customer",
       "created": "Created"
     },
     "actions": {
