@@ -18,12 +18,12 @@
     "subtitle": "Bem-vindo. Entre para acessar seus leads.",
     "loading": "Carregando",
     "signing_in": "Entrando...",
-    "error": "Nao foi possivel entrar. Verifique suas credenciais.",
+    "error": "Não foi possível entrar. Verifique suas credenciais.",
     "forgot_password": "Esqueci minha senha",
-    "forgot_help": "Em breve. Por enquanto, peca um reset ao seu admin."
+    "forgot_help": "Em breve. Por enquanto, peça um reset ao seu admin."
   },
   "tabs": {
-    "home": "Inicio",
+    "home": "Início",
     "leads": "Leads",
     "schedule": "Agenda",
     "profile": "Perfil"
@@ -36,9 +36,9 @@
     "todays_leads": "Leads de hoje",
     "empty": "Nenhum lead no momento",
     "empty_title": "Sem leads por enquanto",
-    "empty_description": "Quando novos leads forem atribuidos a voce, eles aparecem aqui.",
+    "empty_description": "Quando novos leads forem atribuídos a você, eles aparecem aqui.",
     "error": "Falha ao carregar dados",
-    "error_title": "Sem conexao com o servidor",
+    "error_title": "Sem conexão com o servidor",
     "hero": {
       "active_leads": "Leads ativos",
       "pipeline": "Pipeline"
@@ -50,12 +50,12 @@
   },
   "validation": {
     "email_required": "Informe seu e-mail",
-    "email_invalid": "E-mail invalido",
+    "email_invalid": "E-mail inválido",
     "password_required": "Informe sua senha",
     "password_too_short": "Senha precisa de pelo menos {{count}} caracteres",
     "name_required": "Informe seu nome",
     "name_short": "Nome muito curto",
-    "required": "Campo obrigatorio"
+    "required": "Campo obrigatório"
   },
   "lead": {
     "priority": "Prioridade",
@@ -97,17 +97,17 @@
     "fiel": "Fiel",
     "abandono": "Abandono",
     "esquecido": "Esquecido",
-    "economico": "Economico"
+    "economico": "Econômico"
   },
   "priority": {
     "low": "Baixa",
-    "medium": "Media",
+    "medium": "Média",
     "high": "Alta",
-    "critical": "Critica"
+    "critical": "Crítica"
   },
   "status": {
     "new": "Novo",
-    "assigned": "Atribuido",
+    "assigned": "Atribuído",
     "contacted": "Contatado",
     "converted": "Convertido",
     "lost": "Perdido",
@@ -117,7 +117,7 @@
     "sign_out": "Sair",
     "unnamed": "Sem nome",
     "account": "Conta",
-    "appearance": "Aparencia",
+    "appearance": "Aparência",
     "dark_mode": "Modo escuro",
     "light_mode": "Modo claro",
     "theme_auto": "Seguindo o sistema",
@@ -126,13 +126,13 @@
     "language": "Idioma",
     "photo": "Foto",
     "change_photo": "Trocar foto",
-    "camera": "Camera",
+    "camera": "Câmera",
     "gallery": "Galeria",
     "remove": "Remover",
     "photo_updated": "Foto atualizada",
-    "photo_failed": "Nao foi possivel enviar a foto",
+    "photo_failed": "Não foi possível enviar a foto",
     "photo_removed": "Foto removida",
-    "photo_remove_failed": "Nao foi possivel remover a foto"
+    "photo_remove_failed": "Não foi possível remover a foto"
   },
   "cta": {
     "close": "Fechar",
