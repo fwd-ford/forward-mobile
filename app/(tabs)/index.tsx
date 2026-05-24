@@ -50,6 +50,18 @@ function greetingKey(hour: number): "home.greeting_morning" | "home.greeting_aft
   return "home.greeting_evening";
 }
 
+// "jvfranco08"          -> "Jvfranco"  (strip trailing digits, capitalize)
+// "MARIA Aparecida"     -> "Maria"     (first word, capitalize, rest lower)
+// "joao_carlos"         -> "Joaocarlos" (strip separators)
+// "Maria"               -> "Maria"
+// Trims hero greeting to a humane first name, never leaks usernames or caps.
+function toFriendlyFirstName(input: string): string {
+  const first = input.split(/\s+/)[0] ?? "";
+  const cleaned = first.replace(/\d+$/, "").replace(/[._\-]+/g, "");
+  if (!cleaned) return "";
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+}
+
 function computeHeroStats(leads: Lead[]): HeroStats {
   const activeLeads = leads.filter((l) => ACTIVE_LEAD_STATUSES.has(l.status)).length;
   const pipelineBRL = leads.reduce((sum, l) => sum + (l.expected_value_brl ?? 0), 0);
@@ -89,14 +101,13 @@ export default function HomeScreen() {
     void (async () => {
       const profile = await fetchMyProfile().catch(() => null);
       if (profile?.full_name) {
-        setName(profile.full_name.split(" ")[0]);
+        setName(toFriendlyFirstName(profile.full_name));
         return;
       }
       const auth = await supabase.auth.getUser();
       const email = auth.data.user?.email;
       if (email) {
-        const prefix = email.split("@")[0];
-        setName(prefix.charAt(0).toUpperCase() + prefix.slice(1));
+        setName(toFriendlyFirstName(email.split("@")[0]));
       }
     })();
   }, []);
@@ -147,7 +158,13 @@ export default function HomeScreen() {
                 <View style={styles.heroCol}>
                   <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
                   <Text style={styles.heroValue}>
-                    {formatBRL(hero.pipelineBRL, { compact: true })}
+                    {/* Full BRL para valores <1M (R$ 999.999); acima usa
+                        compact (R$ 1.2M) pra nao estourar o hero. Antes era
+                        sempre compact, gerando R$ 3.6k visualmente
+                        inconsistente com o card abaixo (R$ 1.200 full). */}
+                    {formatBRL(hero.pipelineBRL, {
+                      compact: hero.pipelineBRL >= 1_000_000,
+                    })}
                   </Text>
                 </View>
               </View>

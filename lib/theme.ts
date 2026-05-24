@@ -408,16 +408,21 @@ export const leadPriorityPalette: Record<LeadPriorityKey, StatusPaletteEntry> = 
     border: "rgba(107, 114, 128, 0.30)",
   },
   medium: {
+    // amarelo-mostarda — "atenção" no meio da escala de urgência.
+    // Antes era amber #F59E0B (próximo demais do laranja de high).
     labelKey: "priority.medium",
-    color: "#F59E0B",
-    bg: "rgba(245, 158, 11, 0.14)",
-    border: "rgba(245, 158, 11, 0.40)",
+    color: "#EAB308",
+    bg: "rgba(234, 179, 8, 0.14)",
+    border: "rgba(234, 179, 8, 0.40)",
   },
   high: {
+    // laranja vivo — convenção universal cinza→amarelo→laranja→vermelho
+    // dá escala visual de urgência. Antes era azul #5B8DEF, que não
+    // comunica "alta prioridade" — sugeria info/calmo no meio do funil.
     labelKey: "priority.high",
-    color: "#5B8DEF",
-    bg: "rgba(91, 141, 239, 0.16)",
-    border: "rgba(91, 141, 239, 0.45)",
+    color: "#F97316",
+    bg: "rgba(249, 115, 22, 0.16)",
+    border: "rgba(249, 115, 22, 0.45)",
   },
   critical: {
     labelKey: "priority.critical",
