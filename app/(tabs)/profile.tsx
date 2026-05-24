@@ -260,7 +260,8 @@ export default function ProfileScreen() {
           ) : null}
         </GlassSurface>
 
-        {/* Idioma */}
+        {/* Idioma — section header "IDIOMA" + row mostra o idioma SELECIONADO
+            como label (em vez de duplicar "Idioma"). Value vira o short code. */}
         <Text style={styles.sectionLabel}>{t("profile.language")}</Text>
         <GlassSurface variant="thin" radius={20} style={styles.sectionGroup}>
           <Pressable
@@ -271,8 +272,9 @@ export default function ProfileScreen() {
           >
             <SettingRow
               icon="globe-outline"
-              label={t("profile.language")}
-              value={`${LOCALE_LABEL[locale]} · ${LOCALE_SHORT[locale]}`}
+              label={LOCALE_LABEL[locale]}
+              value={LOCALE_SHORT[locale]}
+              emphasis="label"
               right={<Ionicons name="chevron-down" size={16} color={colors.textSubtle} />}
             />
           </Pressable>
@@ -389,7 +391,9 @@ function createStyles(c: ThemeColors) {
     signOutLabel: {
       ...typography.body,
       fontFamily: fontFamily.semibold,
-      color: c.text,
+      // Sair e acao destrutiva (encerra sessao). Padrao iOS: label em
+      // tom de erro, border neutra (nao alarmante demais).
+      color: c.error,
     },
     pressedSoft: { opacity: 0.7 },
   });
