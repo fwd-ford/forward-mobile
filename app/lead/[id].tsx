@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,7 @@ import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import { api, ApiError, type Lead } from "@/lib/api";
+import { getCustomerById, type Customer } from "@/lib/customer";
 import { formatBRL } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
@@ -49,6 +51,7 @@ export default function LeadDetailScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [lead, setLead] = useState<Lead | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);
@@ -77,6 +80,20 @@ export default function LeadDetailScreen() {
     void load();
   }, [load]);
 
+  // Fetch do customer roda em paralelo apos o lead chegar. Pode falhar por
+  // RLS (auth role sem dealer/admin) — nesse caso `customer` fica null e o
+  // botao Ligar segue desabilitado, sem quebrar a tela.
+  useEffect(() => {
+    if (!lead?.customer_id) return;
+    let alive = true;
+    void getCustomerById(lead.customer_id).then((c) => {
+      if (alive) setCustomer(c);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [lead?.customer_id]);
+
   const onComingSoonAction = useCallback(
     (actionKey: string) => {
       haptic.medium();
@@ -88,6 +105,22 @@ export default function LeadDetailScreen() {
     },
     [t],
   );
+
+  const onCallPress = useCallback(async () => {
+    if (!customer?.phone) {
+      onComingSoonAction("lead.actions.call");
+      return;
+    }
+    haptic.medium();
+    // tel: aceita formatos variados; deixamos o OS interpretar.
+    await Linking.openURL(`tel:${customer.phone}`).catch(() => {
+      setToast({
+        visible: true,
+        message: `${t("lead.actions.call")}: ${t("common.coming_soon")}`,
+        variant: "info",
+      });
+    });
+  }, [customer, onComingSoonAction, t]);
 
   const onFooterLayout = useCallback((e: LayoutChangeEvent) => {
     setFooterHeight(e.nativeEvent.layout.height);
@@ -191,6 +224,12 @@ export default function LeadDetailScreen() {
           </View>
         </View>
 
+        {customer?.full_name ? (
+          <Text style={styles.metaLine}>
+            {t("lead.section.customer")} · {customer.full_name}
+          </Text>
+        ) : null}
+
         {relativeTime ? (
           <Text style={styles.created}>
             {t("lead.section.created")} · {relativeTime}
@@ -230,8 +269,8 @@ export default function LeadDetailScreen() {
           <FooterAction
             icon="call-outline"
             label={t("lead.actions.call")}
-            onPress={() => onComingSoonAction("lead.actions.call")}
-            disabled
+            onPress={() => void onCallPress()}
+            disabled={!customer?.phone}
           />
           <FooterAction
             icon="chatbubble-ellipses-outline"
@@ -311,6 +350,10 @@ function createStyles(c: ThemeColors) {
       ...typography.label,
       textTransform: "uppercase",
       letterSpacing: 0.6,
+    },
+    metaLine: {
+      ...typography.caption,
+      color: c.textMuted,
     },
     created: {
       ...typography.caption,

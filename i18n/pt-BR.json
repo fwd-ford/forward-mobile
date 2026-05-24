@@ -69,6 +69,7 @@
     "section": {
       "reason": "Por que este lead",
       "value": "Pipeline esperado",
+      "customer": "Cliente",
       "created": "Criado"
     },
     "actions": {
