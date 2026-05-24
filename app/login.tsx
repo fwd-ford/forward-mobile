@@ -325,7 +325,7 @@ function createStyles(c: ThemeColors) {
     brand: {
       fontFamily: fontFamily.bold,
       fontSize: 72,
-      letterSpacing: 8,
+      letterSpacing: -2,
       color: c.text,
       lineHeight: 72,
     },

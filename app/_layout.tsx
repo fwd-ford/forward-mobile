@@ -1,4 +1,14 @@
+import { enableScreens } from "react-native-screens";
 import { Ionicons } from "@expo/vector-icons";
+
+// Without this, react-native-screens disables itself on web (ENABLE_SCREENS
+// = isNativePlatformSupported), so bottom-tabs falls back to raw <View>s that
+// never hide inactive tabs. freezeOnBlur/lazy/animation:none all noop in that
+// fallback path. Forcing it on routes us through Screen.web.tsx which sets
+// display:'none' on activityState=INACTIVE, making the tab swap clean.
+// Sem isso, screens-on-web nao desliga abas inativas e elas sobrepoem.
+enableScreens(true);
+
 import {
   Fraunces_400Regular,
   Fraunces_600SemiBold,
@@ -21,7 +31,7 @@ import "@/i18n";
 import { IntroVideo } from "@/components/ui/IntroVideo";
 import { MeshBackground } from "@/components/ui/MeshBackground";
 import { LocaleProvider } from "@/context/LocaleContext";
-import { ThemeProvider, useTheme } from "@/context/ThemeContext";
+import { NavigationThemeBridge, ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -29,9 +39,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <LocaleProvider>
-          <RootStack />
-        </LocaleProvider>
+        <NavigationThemeBridge>
+          <LocaleProvider>
+            <RootStack />
+          </LocaleProvider>
+        </NavigationThemeBridge>
       </ThemeProvider>
     </SafeAreaProvider>
   );

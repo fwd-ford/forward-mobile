@@ -29,7 +29,6 @@ import { useTheme } from "@/context/ThemeContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
-import { getAccessToken } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
@@ -72,8 +71,7 @@ export default function HomeScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const token = (await getAccessToken()) ?? undefined;
-      const data = await api.listLeads({ limit: HERO_FETCH_LIMIT }, token);
+      const data = await api.listLeads({ limit: HERO_FETCH_LIMIT });
       setLeads(data);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("home.error"));

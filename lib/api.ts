@@ -3,6 +3,8 @@
 
 import Constants from "expo-constants";
 
+import { getAccessToken } from "./session";
+
 // app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Fly.
 // Esse fallback abaixo so cobre se alguem rodar sem app.config.js (build quebrada).
 const baseUrl =
@@ -27,9 +29,12 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers ?? {});
   headers.set("Content-Type", "application/json");
+  // Pega o JWT do Supabase a cada request. autoRefreshToken cuida da renovacao,
+  // entao chamar aqui sempre devolve o token vivo (ou null se nao logado).
+  const token = await getAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(`${baseUrl}${path}`, { ...init, headers });
@@ -92,15 +97,14 @@ export interface ChurnScore {
 }
 
 export const api = {
-  getVehicle: (vin: string, token?: string) => request<Vehicle>(`/api/v1/vehicles/${vin}`, undefined, token),
-  listLeads: (params: { dealerId?: string; status?: Lead["status"]; limit?: number } = {}, token?: string) => {
+  getVehicle: (vin: string) => request<Vehicle>(`/api/v1/vehicles/${vin}`),
+  listLeads: (params: { dealerId?: string; status?: Lead["status"]; limit?: number } = {}) => {
     const qs = new URLSearchParams();
     if (params.dealerId) qs.set("dealer_id", params.dealerId);
     if (params.status) qs.set("status", params.status);
     if (params.limit) qs.set("limit", String(params.limit));
     const query = qs.toString();
-    return request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`, undefined, token);
+    return request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`);
   },
-  getScore: (customerId: string, token?: string) =>
-    request<ChurnScore>(`/api/v1/scores/${customerId}`, undefined, token),
+  getScore: (customerId: string) => request<ChurnScore>(`/api/v1/scores/${customerId}`),
 };
