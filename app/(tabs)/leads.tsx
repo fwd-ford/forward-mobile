@@ -294,7 +294,7 @@ export default function LeadsScreen() {
                 onPress={() =>
                   router.push({
                     pathname: "/lead/[id]",
-                    params: { id: item.id, lead: JSON.stringify(item) },
+                    params: { id: item.id },
                   })
                 }
               />

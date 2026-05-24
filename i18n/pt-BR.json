@@ -58,6 +58,7 @@
     "required": "Campo obrigatório"
   },
   "lead": {
+    "vin_label": "VIN",
     "priority": "Prioridade",
     "status": "Status",
     "reason": "Motivo",

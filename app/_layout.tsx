@@ -107,7 +107,7 @@ function RootStack() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ title: "" }} />
-          <Stack.Screen name="lead/[id]" options={{ title: "Lead" }} />
+          <Stack.Screen name="lead/[id]" options={{ headerShown: false }} />
         </Stack>
       )}
     </View>

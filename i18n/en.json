@@ -54,6 +54,7 @@
     "required": "Required field"
   },
   "lead": {
+    "vin_label": "VIN",
     "priority": "Priority",
     "status": "Status",
     "reason": "Reason",
