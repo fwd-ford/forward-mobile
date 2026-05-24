@@ -26,7 +26,6 @@ import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
-import { getAccessToken } from "@/lib/session";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 type FilterKey = "all" | "critical" | "today" | "forgotten";
@@ -107,8 +106,7 @@ export default function LeadsScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const token = (await getAccessToken()) ?? undefined;
-      setLeads(await api.listLeads({ limit: 100 }, token));
+      setLeads(await api.listLeads({ limit: 100 }));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("home.error"));
     }
@@ -133,6 +131,11 @@ export default function LeadsScreen() {
     [leads],
   );
   const isFiltering = filter !== "all" || query.trim().length > 0;
+  // Mirror Home: when fetch fails with no cached data, swap the search+chips
+  // header + ErrorBanner combo for a full-screen EmptyState + retry pill so
+  // both tabs feel identical under network failures.
+  // Erro fullscreen igual a Home quando lista vazia (cloud-offline + pill).
+  const showFullScreenError = error !== null && leads.length === 0;
 
   function onFilterPress(k: FilterKey) {
     haptic.selection();
@@ -160,74 +163,95 @@ export default function LeadsScreen() {
           {t("leads.title")}
         </Text>
 
-        {/* Glass pill search */}
-        <GlassSurface variant="thin" radius={radius.pill} style={styles.searchWrap}>
-          <View style={styles.searchInner}>
-            <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={t("leads.search_placeholder")}
-              placeholderTextColor={colors.textSubtle}
-              autoCapitalize="none"
-              autoCorrect={false}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              style={[styles.searchInput, { color: colors.text }]}
-            />
-            {query.length > 0 ? (
-              <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                <Ionicons name="close-circle" size={16} color={colors.textSubtle} />
-              </Pressable>
-            ) : null}
-          </View>
-        </GlassSurface>
+        {/* Search + chips hidden when there is nothing to filter (full-screen error). */}
+        {/* Esconde busca/chips no erro fullscreen — nao ha o que filtrar. */}
+        {!showFullScreenError ? (
+          <>
+            <GlassSurface variant="thin" radius={radius.pill} style={styles.searchWrap}>
+              <View style={styles.searchInner}>
+                <Ionicons name="search-outline" size={18} color={colors.textMuted} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={t("leads.search_placeholder")}
+                  placeholderTextColor={colors.textSubtle}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  style={[styles.searchInput, { color: colors.text }]}
+                />
+                {query.length > 0 ? (
+                  <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                    <Ionicons name="close-circle" size={16} color={colors.textSubtle} />
+                  </Pressable>
+                ) : null}
+              </View>
+            </GlassSurface>
 
-        {/* Glass / solid pill chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.chipsRow}
-        >
-          {filters.map((f) => {
-            const active = filter === f.key;
-            const Wrapper = active ? View : GlassSurface;
-            return (
-              <Pressable
-                key={f.key}
-                onPress={() => onFilterPress(f.key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                style={({ pressed }) => [pressed && { opacity: 0.85 }]}
-              >
-                <Wrapper
-                  variant="thin"
-                  radius={radius.pill}
-                  style={[styles.chip, active && styles.chipActive]}
-                >
-                  <Text
-                    style={[
-                      styles.chipLabel,
-                      { color: active ? colors.primaryText : colors.text },
-                    ]}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.chipsRow}
+            >
+              {filters.map((f) => {
+                const active = filter === f.key;
+                const Wrapper = active ? View : GlassSurface;
+                return (
+                  <Pressable
+                    key={f.key}
+                    onPress={() => onFilterPress(f.key)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    style={({ pressed }) => [pressed && { opacity: 0.85 }]}
                   >
-                    {t(f.labelKey)}
-                  </Text>
-                </Wrapper>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                    <Wrapper
+                      variant="thin"
+                      radius={radius.pill}
+                      style={[styles.chip, active && styles.chipActive]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipLabel,
+                          { color: active ? colors.primaryText : colors.text },
+                        ]}
+                      >
+                        {t(f.labelKey)}
+                      </Text>
+                    </Wrapper>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : null}
       </View>
 
-      {error ? (
+      {showFullScreenError ? (
+        <View style={styles.emptyWrap}>
+          <EmptyState
+            icon="cloud-offline-outline"
+            title={t("home.error_title")}
+            description={error ?? undefined}
+          />
+          <Pressable
+            onPress={() => void load()}
+            style={({ pressed }) => [
+              styles.retryPill,
+              pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+            ]}
+          >
+            <Text style={styles.retryPillLabel}>{t("common.retry")}</Text>
+          </Pressable>
+        </View>
+      ) : error ? (
         <View style={styles.errorWrap}>
           <ErrorBanner message={error} onRetry={() => void load()} />
         </View>
       ) : null}
 
-      {initialLoading ? (
+      {showFullScreenError ? null : initialLoading ? (
         <View style={styles.skeletonStack}>
           <LeadCardSkeleton />
           <LeadCardSkeleton />
@@ -332,6 +356,23 @@ function createStyles(c: ThemeColors) {
     errorWrap: {
       paddingHorizontal: spacing["2xl"],
       marginBottom: spacing.md,
+    },
+    emptyWrap: {
+      alignItems: "center",
+      marginTop: spacing["2xl"],
+      gap: spacing.lg,
+      paddingHorizontal: spacing["2xl"],
+    },
+    retryPill: {
+      paddingVertical: spacing.md - 2,
+      paddingHorizontal: spacing["2xl"],
+      borderRadius: radius.pill,
+      backgroundColor: c.primary,
+    },
+    retryPillLabel: {
+      ...typography.body,
+      fontFamily: fontFamily.semibold,
+      color: c.primaryText,
     },
     skeletonStack: {
       gap: spacing.md,

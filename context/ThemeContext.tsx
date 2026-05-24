@@ -5,6 +5,11 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  DarkTheme as NavDarkTheme,
+  DefaultTheme as NavDefaultTheme,
+  ThemeProvider as NavThemeProvider,
+} from "@react-navigation/native";
+import {
   createContext,
   useCallback,
   useContext,
@@ -183,4 +188,31 @@ export function useTheme(): ThemeContextValue {
     throw new Error("useTheme must be used inside <ThemeProvider>");
   }
   return ctx;
+}
+
+// Bridges our ThemeContext into @react-navigation/native's ThemeProvider.
+// Without this, expo-router's Stack/Tabs paint screen containers with
+// NavDefaultTheme.colors.background (#F2F2F2) on top of MeshBackground,
+// regardless of contentStyle on screenOptions. Transparent background + card
+// let the root MeshBackground show through every route.
+// Bridge: nav containers ficam transparentes pro mesh aparecer em todas as rotas.
+export function NavigationThemeBridge({ children }: { children: ReactNode }) {
+  const { colors, mode } = useTheme();
+  const navTheme = useMemo(() => {
+    const base = mode === "dark" ? NavDarkTheme : NavDefaultTheme;
+    return {
+      ...base,
+      dark: mode === "dark",
+      colors: {
+        ...base.colors,
+        background: "transparent",
+        card: "transparent",
+        text: colors.text,
+        primary: colors.primary,
+        border: colors.border,
+        notification: colors.error,
+      },
+    };
+  }, [mode, colors]);
+  return <NavThemeProvider value={navTheme}>{children}</NavThemeProvider>;
 }
