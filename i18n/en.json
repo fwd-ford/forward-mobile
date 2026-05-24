@@ -87,7 +87,7 @@
       "all": "All",
       "critical": "Critical",
       "today": "Today",
-      "forgotten": "Forgotten 30d+"
+      "forgotten": "Forgotten"
     },
     "empty_search_title": "Nothing found",
     "empty_search_description": "No leads for '{{query}}'. Try a partial VIN or another filter."
