@@ -147,13 +147,14 @@ export default function HomeScreen() {
                 <View style={styles.heroCol}>
                   <Text style={styles.heroLabel}>{t("home.hero.pipeline")}</Text>
                   <Text style={styles.heroValue}>
-                    {/* Full BRL para valores <1M (R$ 999.999); acima usa
-                        compact (R$ 1.2M) pra nao estourar o hero. Antes era
-                        sempre compact, gerando R$ 3.6k visualmente
-                        inconsistente com o card abaixo (R$ 1.200 full). */}
-                    {formatBRL(hero.pipelineBRL, {
-                      compact: hero.pipelineBRL >= 1_000_000,
-                    })}
+                    {/* Compact sempre no hero. O hero tem 50% width e font
+                        grande — "R$ 3.600" (8 chars) ja estoura. Compact
+                        renderiza "R$ 3.6k" (7 chars) que cabe e mantem
+                        leitura rapida. formatBRL ignora compact pra valores
+                        < R$ 1.000 (fica full), entao pipelines pequenos
+                        nao viram "R$ 0.5k". Cards abaixo continuam full
+                        porque tem largura inteira. */}
+                    {formatBRL(hero.pipelineBRL, { compact: true })}
                   </Text>
                 </View>
               </View>
