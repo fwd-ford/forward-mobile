@@ -27,6 +27,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
+import { toFriendlyFirstName } from "@/lib/displayName";
 import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
@@ -48,18 +49,6 @@ function greetingKey(hour: number): "home.greeting_morning" | "home.greeting_aft
   if (hour < 12) return "home.greeting_morning";
   if (hour < 18) return "home.greeting_afternoon";
   return "home.greeting_evening";
-}
-
-// "jvfranco08"          -> "Jvfranco"  (strip trailing digits, capitalize)
-// "MARIA Aparecida"     -> "Maria"     (first word, capitalize, rest lower)
-// "joao_carlos"         -> "Joaocarlos" (strip separators)
-// "Maria"               -> "Maria"
-// Trims hero greeting to a humane first name, never leaks usernames or caps.
-function toFriendlyFirstName(input: string): string {
-  const first = input.split(/\s+/)[0] ?? "";
-  const cleaned = first.replace(/\d+$/, "").replace(/[._\-]+/g, "");
-  if (!cleaned) return "";
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
 }
 
 function computeHeroStats(leads: Lead[]): HeroStats {

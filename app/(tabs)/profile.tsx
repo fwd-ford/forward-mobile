@@ -31,6 +31,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
 import { signOut } from "@/lib/auth";
 import { deleteAvatar, uploadAvatar } from "@/lib/avatar-upload";
+import { friendlyDisplayName } from "@/lib/displayName";
 import { haptic } from "@/lib/haptics";
 import { pickFromCamera, pickFromLibrary, type PickedImage } from "@/lib/image-picker";
 import { LOCALE_LABEL, LOCALE_SHORT } from "@/lib/locale";
@@ -52,6 +53,7 @@ export default function ProfileScreen() {
   const [state, setState] = useState<ProfileState | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [localePickerOpen, setLocalePickerOpen] = useState(false);
+  const [showPhotoActions, setShowPhotoActions] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -78,6 +80,7 @@ export default function ProfileScreen() {
       const url = await uploadAvatar(picked);
       const updated = await updateMyProfile({ avatar_url: url });
       setState((prev) => (prev ? { ...prev, profile: updated } : prev));
+      setShowPhotoActions(false);
       haptic.success();
       showToast(t("profile.photo_updated"));
     } catch {
@@ -107,6 +110,7 @@ export default function ProfileScreen() {
       await deleteAvatar();
       const updated = await updateMyProfile({ avatar_url: null });
       setState((prev) => (prev ? { ...prev, profile: updated } : prev));
+      setShowPhotoActions(false);
       haptic.success();
       showToast(t("profile.photo_removed"));
     } catch {
@@ -116,6 +120,11 @@ export default function ProfileScreen() {
       setUploadingPhoto(false);
     }
   }
+
+  const onToggleActions = useCallback(() => {
+    haptic.selection();
+    setShowPhotoActions((prev) => !prev);
+  }, []);
 
   async function onSignOut() {
     haptic.medium();
@@ -141,8 +150,11 @@ export default function ProfileScreen() {
   if (!state) return <LoadingScreen label={t("loading.profile")} />;
 
   const { email, profile } = state;
-  const displayName = profile?.full_name ?? t("profile.unnamed");
-  const avatarSource = profile?.full_name ?? "";
+  const displayName =
+    friendlyDisplayName({ fullName: profile?.full_name, email }) ??
+    t("profile.greeting_fallback");
+  // ProfileAvatar deriva iniciais — preferir full_name; cair pra email; nunca string vazia.
+  const avatarSource = profile?.full_name?.trim() || email || displayName;
 
   return (
     <View style={styles.container}>
@@ -162,14 +174,16 @@ export default function ProfileScreen() {
           {email ? <Text style={styles.email}>{email}</Text> : null}
         </View>
 
-        {/* Avatar inline (no card wrapper) + 3 photo buttons in a row */}
+        {/* Avatar inline; pills de Camera/Galeria/Remover so aparecem quando o user
+            toca o avatar (default colapsado pra reduzir poluicao visual). */}
         <View style={styles.avatarBlock}>
           <Pressable
-            onPress={onPickFromLibrary}
+            onPress={onToggleActions}
             disabled={uploadingPhoto}
             style={({ pressed }) => [styles.avatarPressable, pressed && styles.pressedSoft]}
             accessibilityRole="button"
             accessibilityLabel={t("profile.change_photo")}
+            accessibilityState={{ expanded: showPhotoActions }}
           >
             <ProfileAvatar uri={profile?.avatar_url} source={avatarSource} size={88} />
             <View style={styles.avatarBadge}>
@@ -181,36 +195,40 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          <View style={styles.photoButtonsRow}>
-            <PhotoButton
-              icon="camera-outline"
-              label={t("profile.camera")}
-              onPress={onPickFromCamera}
-              disabled={uploadingPhoto}
-            />
-            <PhotoButton
-              icon="images-outline"
-              label={t("profile.gallery")}
-              onPress={onPickFromLibrary}
-              disabled={uploadingPhoto}
-            />
-            {profile?.avatar_url ? (
+          {showPhotoActions ? (
+            <View style={styles.photoButtonsRow}>
               <PhotoButton
-                icon="trash-outline"
-                label={t("profile.remove")}
-                onPress={onRemovePhoto}
+                icon="camera-outline"
+                label={t("profile.camera")}
+                onPress={onPickFromCamera}
                 disabled={uploadingPhoto}
-                destructive
               />
-            ) : null}
-          </View>
+              <PhotoButton
+                icon="images-outline"
+                label={t("profile.gallery")}
+                onPress={onPickFromLibrary}
+                disabled={uploadingPhoto}
+              />
+              {profile?.avatar_url ? (
+                <PhotoButton
+                  icon="trash-outline"
+                  label={t("profile.remove")}
+                  onPress={onRemovePhoto}
+                  disabled={uploadingPhoto}
+                  destructive
+                />
+              ) : null}
+            </View>
+          ) : (
+            <Text style={styles.photoHint}>{t("profile.change_photo_hint")}</Text>
+          )}
         </View>
 
         {/* Aparencia section — glass group, rows separadas por hairline */}
         <Text style={styles.sectionLabel}>{t("profile.appearance")}</Text>
         <GlassSurface variant="thin" radius={20} style={styles.sectionGroup}>
           <SettingRow
-            icon={mode === "dark" ? "moon" : "sunny"}
+            icon="moon-outline"
             label={t("profile.dark_mode")}
             value={isOverridden ? t("profile.theme_manual") : t("profile.theme_auto")}
             emphasis="label"
@@ -332,6 +350,11 @@ function createStyles(c: ThemeColors) {
       flexWrap: "wrap",
       gap: spacing.sm,
       justifyContent: "center",
+    },
+    photoHint: {
+      ...typography.caption,
+      color: c.textMuted,
+      textAlign: "center",
     },
     sectionLabel: {
       ...typography.labelCaps,
