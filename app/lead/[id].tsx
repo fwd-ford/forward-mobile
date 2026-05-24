@@ -1,5 +1,5 @@
 // Lead detail — Glass Minimalist redesign (Fase 2, screen 5/6).
-// Header: labelCaps "LEAD" + VIN mono large + priority/status badges.
+// Header: own back pill (no Stack header) + VIN eyebrow + VIN mono large + badges.
 // Body: glass sections for reason and value.
 // Footer: glass thick fixed at the bottom with 3 actions.
 
@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 
@@ -36,30 +37,19 @@ import {
   type ThemeColors,
 } from "@/lib/theme";
 
-function tryParseLead(serialized: string | string[] | undefined): Lead | null {
-  if (!serialized || Array.isArray(serialized)) return null;
-  try {
-    const parsed = JSON.parse(serialized) as Lead;
-    return parsed && typeof parsed.id === "string" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 export default function LeadDetailScreen() {
-  const { id, lead: serializedLead } = useLocalSearchParams<{ id: string; lead?: string }>();
+  // Solo o id na URL. O JSON serializado costumava vir aqui para hidratacao
+  // instantanea, mas vazava customer_id/dealer_id na URL do browser e no
+  // historico. Trocamos por sempre carregar via load() — Sprint 1 ainda
+  // pega via listLeads(); quando o backend expuser GET /leads/{id}, trocar.
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // Hidrata na hora se a tela anterior passou o lead serializado (caminho feliz
-  // vindo de Home/Leads). Cai pro listLeads quando o usuario abre por deep link
-  // sem param, ou quando a desserializacao falha.
-  const hydratedLead = useMemo(() => tryParseLead(serializedLead), [serializedLead]);
-
-  const [lead, setLead] = useState<Lead | null>(hydratedLead);
-  const [loading, setLoading] = useState(hydratedLead === null);
+  const [lead, setLead] = useState<Lead | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);
   const [toast, setToast] = useState<{
@@ -84,9 +74,8 @@ export default function LeadDetailScreen() {
   }, [id, t]);
 
   useEffect(() => {
-    if (hydratedLead && hydratedLead.id === id) return;
     void load();
-  }, [hydratedLead, id, load]);
+  }, [load]);
 
   const onComingSoonAction = useCallback(
     (actionKey: string) => {
@@ -104,10 +93,30 @@ export default function LeadDetailScreen() {
     setFooterHeight(e.nativeEvent.layout.height);
   }, []);
 
+  // Back pill rendered floating top-left; appears in every state so a stuck
+  // skeleton or error screen still has a way out.
+  // Pill flutuante de voltar — presente em loading/error/empty/ok pra nao
+  // prender o usuario.
+  const BackPill = (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.backPillFloat,
+        { top: insets.top + spacing.md },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+      ]}
+    >
+      <Ionicons name="chevron-back" size={18} color={colors.text} />
+      <Text style={styles.backPillFloatLabel}>{t("common.back")}</Text>
+    </Pressable>
+  );
+
   if (loading && !lead) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + spacing["3xl"] }]}>
-        <View style={styles.scroll}>
+      <View style={styles.container}>
+        {BackPill}
+        <View style={[styles.scroll, { paddingTop: insets.top + spacing["4xl"] }]}>
           <Skeleton width={120} height={14} borderRadius={radius.sm} />
           <Skeleton width={240} height={32} borderRadius={radius.sm} />
           <View style={styles.skeletonRow}>
@@ -123,20 +132,10 @@ export default function LeadDetailScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + spacing["3xl"] }]}>
-        <View style={styles.errorWrap}>
+      <View style={styles.container}>
+        {BackPill}
+        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["4xl"] }]}>
           <ErrorBanner message={error} onRetry={() => void load()} />
-        </View>
-        <View style={styles.notFoundActions}>
-          <Pressable
-            onPress={() => router.back()}
-            style={({ pressed }) => [
-              styles.backPill,
-              pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <Text style={styles.backPillLabel}>{t("common.back")}</Text>
-          </Pressable>
         </View>
       </View>
     );
@@ -144,17 +143,11 @@ export default function LeadDetailScreen() {
 
   if (!lead) {
     return (
-      <View style={[styles.center, { paddingTop: insets.top }]}>
-        <Text style={styles.muted}>{t("lead.not_found")}</Text>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [
-            styles.backPillPrimary,
-            pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-          ]}
-        >
-          <Text style={styles.backPillPrimaryLabel}>{t("common.back")}</Text>
-        </Pressable>
+      <View style={styles.container}>
+        {BackPill}
+        <View style={[styles.center, { paddingTop: insets.top }]}>
+          <Text style={styles.muted}>{t("lead.not_found")}</Text>
+        </View>
       </View>
     );
   }
@@ -165,17 +158,18 @@ export default function LeadDetailScreen() {
 
   return (
     <View style={styles.container}>
+      {BackPill}
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + spacing["3xl"],
+            paddingTop: insets.top + spacing["4xl"],
             paddingBottom: insets.bottom + footerHeight + spacing.lg,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.labelCaps}>{t("lead.priority")}</Text>
+        <Text style={styles.labelCaps}>{t("lead.vin_label")}</Text>
         <Text style={styles.vin} numberOfLines={1}>
           {lead.vin ?? "—"}
         </Text>
@@ -271,6 +265,25 @@ function createStyles(c: ThemeColors) {
       paddingHorizontal: spacing["2xl"],
       gap: spacing.md,
     },
+    backPillFloat: {
+      position: "absolute",
+      left: spacing.lg,
+      zIndex: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs,
+      paddingVertical: spacing.xs + 2,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.borderStrong,
+      backgroundColor: c.surface,
+    },
+    backPillFloatLabel: {
+      ...typography.label,
+      fontFamily: fontFamily.semibold,
+      color: c.text,
+    },
     labelCaps: {
       ...typography.labelCaps,
       color: c.textMuted,
@@ -343,34 +356,6 @@ function createStyles(c: ThemeColors) {
       justifyContent: "center",
       padding: spacing.xl,
       gap: spacing.lg,
-    },
-    notFoundActions: {
-      marginTop: spacing.lg,
-      paddingHorizontal: spacing["2xl"],
-    },
-    backPill: {
-      alignSelf: "flex-start",
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing["2xl"],
-      borderRadius: radius.pill,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.borderStrong,
-    },
-    backPillLabel: {
-      ...typography.body,
-      fontFamily: fontFamily.semibold,
-      color: c.text,
-    },
-    backPillPrimary: {
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing["3xl"],
-      borderRadius: radius.pill,
-      backgroundColor: c.primary,
-    },
-    backPillPrimaryLabel: {
-      ...typography.body,
-      fontFamily: fontFamily.semibold,
-      color: c.primaryText,
     },
   });
 }
