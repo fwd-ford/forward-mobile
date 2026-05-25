@@ -78,8 +78,10 @@ export default function TabsLayout() {
           borderTopWidth: 0,
           elevation: 0,
         },
-        // Hairline divider on top so the glass tab bar reads as detached, not
-        // floating ambiguously over content. tabBarBackground owns the blur.
+        // Hairline divider on top so the tab bar reads as detached, not
+        // floating ambiguously over content. Background usa bottomBarBg do
+        // theme (Figma node 1:2 / 8:55), quase opaco (0.98) e com tint de
+        // light/dark. GlassSurface mantida pra blur sutil residual.
         tabBarBackground: () => (
           <GlassSurface
             variant="thick"
@@ -88,6 +90,7 @@ export default function TabsLayout() {
             style={[
               StyleSheet.absoluteFillObject,
               {
+                backgroundColor: colors.bottomBarBg,
                 borderTopWidth: StyleSheet.hairlineWidth,
                 borderTopColor: colors.glassBorder,
               },
