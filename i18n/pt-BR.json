@@ -30,19 +30,16 @@
     "profile": "Perfil"
   },
   "home": {
-    "greeting_morning": "Bom dia, {{name}}",
-    "greeting_afternoon": "Boa tarde, {{name}}",
-    "greeting_evening": "Boa noite, {{name}}",
-    "today": "Hoje",
-    "recent_leads": "Leads recentes",
+    "welcome": "Bem-vindo, {{name}}",
+    "recent_leads": "Últimos Leads",
     "empty": "Nenhum lead no momento",
     "empty_title": "Sem leads por enquanto",
     "empty_description": "Quando novos leads forem atribuídos a você, eles aparecem aqui.",
     "error": "Falha ao carregar dados",
     "error_title": "Sem conexão com o servidor",
     "hero": {
-      "active_leads": "Leads ativos",
-      "pipeline": "Pipeline"
+      "leads_label": "Leads",
+      "value_label": "Valor"
     },
     "see_all_with_count": "Ver todos os {{count}} leads"
   },
