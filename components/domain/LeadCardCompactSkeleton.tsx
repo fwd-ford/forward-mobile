@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useTheme } from "@/context/ThemeContext";
 import { spacing, type ThemeColors } from "@/lib/theme";
 
-const CARD_WIDTH = 170;
 const CARD_HEIGHT = 115;
 
 export function LeadCardCompactSkeleton() {
@@ -37,11 +36,11 @@ export function LeadCardCompactSkeleton() {
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
     card: {
-      width: CARD_WIDTH,
+      flex: 1,
       height: CARD_HEIGHT,
       backgroundColor: c.leadCardCompactBg,
       borderRadius: 5,
-      paddingHorizontal: 10,
+      paddingHorizontal: 14,
       paddingTop: 8,
       paddingBottom: 6,
       overflow: "hidden",

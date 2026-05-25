@@ -19,10 +19,17 @@ import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { useTheme } from "@/context/ThemeContext";
 import type { Lead } from "@/lib/api";
 import { customerNameFor } from "@/lib/demo-data";
-import { formatBRL } from "@/lib/format";
 import { haptic } from "@/lib/haptics";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { spacing, typography, type ThemeColors } from "@/lib/theme";
+
+// Format currency com centavos: "R$ 1.987,32". Diferente de lib/format
+// que omite centavos pra outras telas — aqui na home queremos visualizar
+// o valor completo dado o estilo editorial do card (Figma node 8:72).
+const BRL_WITH_CENTS = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
 
 const raptorAsset = require("@/assets/images/raptor-card.png");
 
@@ -32,7 +39,6 @@ export interface LeadCardCompactProps {
 }
 
 const SCALE_PRESSED = 0.97;
-const CARD_WIDTH = 170;
 const CARD_HEIGHT = 115;
 const ID_LENGTH = 5;
 
@@ -49,7 +55,9 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
   const customer = customerNameFor(lead.customer_id);
   const relativeTime = formatRelativeTime(lead.created_at, t);
   const valueText =
-    lead.expected_value_brl != null ? formatBRL(lead.expected_value_brl) : "—";
+    lead.expected_value_brl != null
+      ? BRL_WITH_CENTS.format(lead.expected_value_brl)
+      : "—";
 
   const handlePressIn = () => {
     if (!onPress) return;
@@ -81,12 +89,14 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
       <Text style={styles.id} numberOfLines={1}>
         ID:{shortId(lead.id)}
       </Text>
-      <Image
-        source={raptorAsset}
-        style={styles.image}
-        resizeMode="contain"
-        accessible={false}
-      />
+      <View style={styles.imageWrap}>
+        <Image
+          source={raptorAsset}
+          style={styles.image}
+          resizeMode="cover"
+          accessible={false}
+        />
+      </View>
       <Text style={styles.customer} numberOfLines={1}>
         {customer}
       </Text>
@@ -104,7 +114,7 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
   if (!onPress) return body;
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[styles.outer, { transform: [{ scale }] }]}>
       <Pressable
         onPress={() => {
           haptic.light();
@@ -123,12 +133,17 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
+    // outer wrap absorve o flex:1 do FlatList numColumns pra que o
+    // Animated.View nao colapse o card pra largura intrinseca.
+    outer: {
+      flex: 1,
+    },
     card: {
-      width: CARD_WIDTH,
+      flex: 1,
       height: CARD_HEIGHT,
       backgroundColor: c.leadCardCompactBg,
       borderRadius: 5,
-      paddingHorizontal: 10,
+      paddingHorizontal: 14,
       paddingTop: 8,
       paddingBottom: 6,
       overflow: "hidden",
@@ -152,11 +167,18 @@ function createStyles(c: ThemeColors) {
       color: c.leadCardCompactText,
       marginTop: 2,
     },
-    image: {
-      width: 102,
-      height: 53,
+    imageWrap: {
       alignSelf: "center",
-      marginTop: -4,
+      width: "70%",
+      height: 53,
+      marginTop: -2,
+      overflow: "hidden",
+    },
+    image: {
+      width: "144%",
+      height: "156%",
+      marginLeft: "-24%",
+      marginTop: "-36%",
     },
     customer: {
       ...typography.cardMeta,

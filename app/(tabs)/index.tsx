@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppBackground } from "@/components/ui/AppBackground";
 import Globe from "@/components/illustrations/Globe.dom";
+import { GlobeLocationPin } from "@/components/illustrations/GlobeLocationPin";
 import { RotatingClock } from "@/components/illustrations/RotatingClock";
 import { HeroStatsBlock, type HeroStatsItem } from "@/components/ui/HeroStatsBlock";
 import { LeadCardCompact } from "@/components/domain/LeadCardCompact";
@@ -77,6 +78,10 @@ const HeroDecoration = memo(function HeroDecoration() {
       <View style={decorationStyles.globeWrap} pointerEvents="none">
         <Globe size={324} />
       </View>
+      {/* Pin + linha + label sobre o globo na posicao visual de Sao Paulo.
+          Pose estatica do globo permite hardcoded — coords sao relativas
+          ao parent (heroArea), nao ao canvas do globe. */}
+      <GlobeLocationPin style={decorationStyles.pinWrap} />
     </>
   );
 });
@@ -267,6 +272,15 @@ const decorationStyles = StyleSheet.create({
     width: 324,
     height: 315,
   },
+  // Pin ancorado a Sao Paulo na pose visual estatica do globe (phi 5.5,
+  // theta 0.3). Coords estimadas empiricamente a partir do screenshot.
+  pinWrap: {
+    position: "absolute",
+    left: 250,
+    top: 280,
+    width: 100,
+    alignItems: "center",
+  },
 });
 
 function createStyles(c: ThemeColors) {
@@ -307,7 +321,9 @@ function createStyles(c: ThemeColors) {
       gap: GRID_GAP,
     },
     skeletonCell: {
-      width: 170,
+      // 2 colunas: (viewport - 2*padding - gap) / 2 = width disponivel.
+      // Calculo em width:'48%' aproxima sem precisar saber viewport.
+      width: "48%",
     },
     emptyWrap: {
       alignItems: "center",
