@@ -28,10 +28,11 @@ Reimplementar `app/(tabs)/index.tsx` do forward-mobile com fidelidade pixel-perf
 | Globo: estilo | Pontilhado MagicUI, estático inclinado 151°, fundo transparente |
 | Globo: markers | 5-7 dots laranja fixos em capitais BR (SP, RJ, BH, Curitiba, POA, BSB, Manaus) |
 | Foto do veículo no card | Raptor F-150 fixa pra todos (bundle local PNG) |
-| Badge | Status do lead com cor por temperatura (hot/warm/cold/won/lost) |
+| Badge | `lead.priority` (low/medium/high/critical) via `leadPriorityPalette` existente — bate com label "Prioridade" do Figma e reusa cores do design system |
 | Top N leads na home | 6 (grid 3 linhas x 2 colunas) |
 | Card linha 2 (descrição) | `lead.reason` da API |
-| Card linha 3 (rodapé) | ID curto (5 chars do UUID) + `last_activity_at` HH:MM |
+| Card linha 3 (nome) | `customerNameFor(lead.customer_id)` via `lib/demo-data.ts` (mesma fonte do LeadCard atual) |
+| Card linha 3 (hora) | `formatRelativeTime(lead.created_at)` (ex "há 2h") — `last_activity_at` não existe no schema |
 | Dark mode | Inverter gradient e cores conforme node-id=8-55 |
 | Estratégia de PR | Big PR única (tudo num branch só) |
 
@@ -41,9 +42,9 @@ Reimplementar `app/(tabs)/index.tsx` do forward-mobile com fidelidade pixel-perf
 
 - `components/illustrations/Globe.dom.tsx` — DOM Component (`'use dom'`) que importa `cobe`, renderiza canvas pontilhado estático inclinado com 5-7 markers laranja. Background transparente. Recebe `theme: 'light' | 'dark'` como prop pra ajustar cor dos dots.
 - `components/illustrations/RotatingClock.tsx` — texto HH:MM gigante (Manrope 80) com gradient transparente via `MaskedView` + `expo-linear-gradient`. Atualiza por minuto.
-- `components/domain/LeadCardCompact.tsx` — variante quadrada 170x115 do LeadCard, com foto Raptor + valor + ID curto + nome + reason + hora + badge status. **Distinta** do `LeadCard` atual (que continua em uso na tela `/leads`).
+- `components/domain/LeadCardCompact.tsx` — variante quadrada 170x115 do LeadCard, com foto Raptor + valor + ID curto + nome do customer + reason + hora relativa + badge de prioridade. **Distinta** do `LeadCard` atual (que continua em uso na tela `/leads`).
 - `components/domain/LeadCardCompactSkeleton.tsx` — shimmer placeholder no mesmo formato 170x115.
-- `components/ui/StatusBadge.tsx` — badge que recebe `status: LeadStatus` e mapeia pra bucket (hot/warm/cold/won/lost), aplicando cores theme-aware.
+- `components/ui/PriorityBadge.tsx` — badge que recebe `priority: LeadPriorityKey` e aplica `leadPriorityPalette` no formato compacto (10px text, radius 5). Reutilizável fora do card.
 - `components/ui/HeroStatsBlock.tsx` — bloco vertical reutilizável com label italic 16 + valor serif 48.
 - `components/ui/AppBackground.tsx` — `LinearGradient` absoluto fullscreen, lê `bgGradientFrom/To` do theme.
 - `assets/images/raptor-card.png` — foto da Raptor F-150 (exportada do Figma).
@@ -53,9 +54,9 @@ Reimplementar `app/(tabs)/index.tsx` do forward-mobile com fidelidade pixel-perf
 - `app/(tabs)/index.tsx` — rewrite completo seguindo a estrutura JSX da seção abaixo.
 - `app/(tabs)/_layout.tsx` — `tabBarStyle.backgroundColor` recebe `c.bottomBarBg` do theme.
 - `app/_layout.tsx` — carregar `@expo-google-fonts/playfair-display` e `@expo-google-fonts/manrope` no font loading hook.
-- `lib/theme.ts` — adicionar tokens novos (gradients, hero vertical, lead card compact, bottom bar, badge buckets) e atualizar `fontFamily` + `typography`.
-- `lib/format.ts` — adicionar opção `{ compact: true, omitCurrency: true, suffix: 'k' }` em `formatBRL` (formato "2742k").
-- `lib/displayName.ts` — adicionar `toFullName(input)` (sanitiza, trim, retorna nome completo). Mantém `toFriendlyFirstName` existente.
+- `lib/theme.ts` — adicionar tokens novos (gradients, hero vertical, lead card compact, bottom bar) e fazer **swap dos valores** de `fontFamily` (keys ficam iguais: `displayBold/regular/etc`, mas apontam pra Playfair/Manrope). Adicionar 2 keys novas: `displayItalic` (Playfair italic) e `light` (Manrope Light). Adicionar entries novas em `typography` (hKpiValue, hKpiLabel, clockHero, cardValue, cardId, cardMeta, cardTime, badge).
+- `lib/format.ts` — adicionar opção `omitCurrency?: boolean` em `formatBRL` (quando `compact + omitCurrency` retorna `"12k"` sem prefixo R$).
+- `lib/displayName.ts` — adicionar `toFullName(input)` (sanitiza, retorna nome completo como passado, capitalizado). Mantém `toFriendlyFirstName` existente.
 - `i18n/en.json` e `i18n/pt-BR.json` — adicionar/remover keys (ver seção Data flow).
 - `package.json` — adicionar `cobe`, `@expo-google-fonts/playfair-display`, `@expo-google-fonts/manrope`, `@react-native-masked-view/masked-view`. Remover `@expo-google-fonts/fraunces`, `@expo-google-fonts/inter`.
 
@@ -103,28 +104,46 @@ export default function Globe({ theme }: GlobeProps) {
 
 ### Tipografia (`lib/theme.ts`)
 
+Estratégia: **manter os nomes das keys existentes**, trocar somente os valores subjacentes. Isso permite migração global automática (todo consumer de `fontFamily.displayBold` passa a renderizar em Playfair, todo consumer de `fontFamily.regular` em Manrope) sem precisar atualizar nenhum import.
+
 ```ts
 fontFamily = {
-  regular:    'Manrope_400Regular',
-  medium:     'Manrope_500Medium',
-  semibold:   'Manrope_600SemiBold',
-  light:      'Manrope_300Light',
-  serif:      'PlayfairDisplay_400Regular',
-  serifItalic:'PlayfairDisplay_500Medium_Italic',
+  // Display serif: Playfair Display (era Fraunces)
+  displayRegular:  'PlayfairDisplay_400Regular',
+  displaySemibold: 'PlayfairDisplay_600SemiBold',
+  displayBold:     'PlayfairDisplay_700Bold',
+  displayItalic:   'PlayfairDisplay_500Medium_Italic',  // NOVA key
+  // Sans body: Manrope (era Inter)
+  regular:   'Manrope_400Regular',
+  medium:    'Manrope_500Medium',
+  semibold:  'Manrope_600SemiBold',
+  bold:      'Manrope_700Bold',
+  light:     'Manrope_300Light',                         // NOVA key
+  // mono: inalterado (system stack)
 };
+```
 
+**Typography entries — NOVAS** (somar às existentes hDisplay/hSection/h1/h2/h3/bodyLg/body/caption/label/labelCaps/mono/monoSmall, que continuam valendo):
+
+```ts
 typography = {
-  hDisplay:   { fontFamily: serif,       fontSize: 36, lineHeight: 45, letterSpacing: -1.8 },
-  hKpiValue:  { fontFamily: serif,       fontSize: 48, lineHeight: 48, letterSpacing: -2.4 },
-  hKpiLabel:  { fontFamily: serifItalic, fontSize: 16, lineHeight: 24, letterSpacing: -0.8 },
-  hSection:   { fontFamily: serifItalic, fontSize: 20, lineHeight: 30, letterSpacing: -1 },
-  cardValue:  { fontFamily: 'Manrope_500Medium', fontSize: 14, letterSpacing: -0.7 },
-  cardId:     { fontFamily: 'Manrope_400Regular', fontSize: 12, letterSpacing: -0.6 },
-  cardMeta:   { fontFamily: 'Manrope_300Light',  fontSize: 10, letterSpacing: -0.5 },
-  cardTime:   { fontFamily: 'Manrope_300Light',  fontSize: 14, letterSpacing: -0.7 },
-  clockHero:  { fontFamily: 'Manrope_400Regular', fontSize: 80, lineHeight: 80, letterSpacing: -4 },
-  badge:      { fontFamily: 'Manrope_300Light',  fontSize: 10, letterSpacing: -0.5 },
+  ...existing,                                          // hDisplay, hSection, body, etc. continuam
+  hKpiValue:  { fontFamily: fontFamily.displayRegular, fontSize: 48, lineHeight: 48, letterSpacing: -2.4 },
+  hKpiLabel:  { fontFamily: fontFamily.displayItalic,  fontSize: 16, lineHeight: 24, letterSpacing: -0.8 },
+  hSectionItalic: { fontFamily: fontFamily.displayItalic, fontSize: 20, lineHeight: 30, letterSpacing: -1 },
+  cardValue:  { fontFamily: fontFamily.medium,  fontSize: 14, letterSpacing: -0.7 },
+  cardId:     { fontFamily: fontFamily.regular, fontSize: 12, letterSpacing: -0.6 },
+  cardMeta:   { fontFamily: fontFamily.light,   fontSize: 10, letterSpacing: -0.5 },
+  cardTime:   { fontFamily: fontFamily.light,   fontSize: 14, letterSpacing: -0.7 },
+  clockHero:  { fontFamily: fontFamily.regular, fontSize: 80, lineHeight: 80, letterSpacing: -4 },
+  badge:      { fontFamily: fontFamily.light,   fontSize: 10, letterSpacing: -0.5 },
 };
+```
+
+**`hDisplay` existente é atualizado** (precisa ficar em 36px com leading 1.25 e tracking -1.8 conforme Figma — hoje está 5xl/44/-1.2):
+
+```ts
+hDisplay: { fontFamily: fontFamily.displayRegular, fontSize: 36, lineHeight: 45, letterSpacing: -1.8 },
 ```
 
 ### Cores (light)
@@ -157,24 +176,17 @@ leadCardCompactText:'#ffffff',
 bottomBarBg:        'rgba(15,15,15,0.98)',
 ```
 
-### Badge buckets
+### Badge (Prioridade)
+
+Badge usa **`leadPriorityPalette` existente** em `lib/theme.ts` — não precisa de mapping novo. Já cobre `low/medium/high/critical`. A cor `critical` é vermelho (#FF453A), próxima do vermelho-rosa do Figma para badges quentes. `PriorityBadge` consome `leadPriorityPalette[lead.priority]` direto:
 
 ```ts
-badgeColors = {
-  hot:         { light: { bg: '#f0a8a8', text: '#be5252' }, dark: { bg: '#581b1b', text: '#be5252' } },
-  warm:        { light: { bg: '#fde0a8', text: '#a67630' }, dark: { bg: '#4a3818', text: '#d4a04a' } },
-  cold:        { light: { bg: '#c8d8f0', text: '#3a5a8a' }, dark: { bg: '#1f3050', text: '#6a90c8' } },
-  closed_won:  { light: { bg: '#b8e0c8', text: '#3a7050' }, dark: { bg: '#1a3a2a', text: '#5aa080' } },
-  closed_lost: { light: { bg: '#d0d0d0', text: '#666'    }, dark: { bg: '#2a2a2a', text: '#888'    } },
-};
-
-statusToBucket = {
-  new: 'hot', contacted: 'hot',
-  qualified: 'warm', test_drive: 'warm',
-  proposal: 'cold', negotiation: 'cold',
-  closed_won: 'closed_won', closed_lost: 'closed_lost',
-};
+// uso interno do PriorityBadge.tsx
+const entry = leadPriorityPalette[lead.priority];
+// entry.bg, entry.color, entry.border, entry.labelKey (já com i18n disponível)
 ```
+
+i18n já tem todas as keys (`priority.low/medium/high/critical` em pt-BR e en).
 
 ## Estrutura JSX
 
@@ -219,13 +231,13 @@ Nota: o `SectionTitle` "Últimos Leads" renderiza **dentro** do `ListHeaderCompo
 
 ```text
 ┌────────────────────────────────────────┐
-│ R$:1987,32      ┌─[Hot]──┐            │  cardValue + StatusBadge top-right
-│ ID:7a3b1                              │  cardId
+│ R$:1987,32     ┌─[Crítica]──┐         │  cardValue + PriorityBadge top-right
+│ ID:7a3b1                              │  cardId — 5 primeiros chars do lead.id (UUID)
 │      ┌──────────────────────┐         │
-│      │   raptor-card.png    │         │  height:53 w:102, posicionada centralizada na metade superior
+│      │   raptor-card.png    │         │  height:53 w:102, centralizada metade superior
 │      └──────────────────────┘         │
-│ João Victor Franco                    │  cardMeta — full_name do customer
-│ Pesquisou EcoSport novo      20:31    │  cardMeta reason + cardTime HH:MM last_activity
+│ João Victor Franco                    │  cardMeta — customerNameFor(lead.customer_id)
+│ Pesquisou EcoSport novo      há 2h    │  cardMeta reason + cardTime formatRelativeTime(created_at)
 └────────────────────────────────────────┘
 ```
 
@@ -240,7 +252,7 @@ Nota: o `SectionTitle` "Últimos Leads" renderiza **dentro** do `ListHeaderCompo
 ### Hero values
 
 - `activeLeads`: integer direto, ex. "124"
-- `pipelineBRL`: `formatBRL(value, { compact: true, omitCurrency: true, suffix: 'k' })` → "2742k", "120k", "5k". Valores < 1000 renderizam sem sufixo ("742").
+- `pipelineBRL`: `formatBRL(value, { compact: true, omitCurrency: true })` → "2742k", "120k", "5k". Valores < 1000 renderizam full ("742") — comportamento já existente do compact, agora sem prefixo "R$ " quando `omitCurrency`.
 
 ### Estados
 
@@ -260,7 +272,6 @@ Nota: o `SectionTitle` "Últimos Leads" renderiza **dentro** do `ListHeaderCompo
 - `home.welcome` → "Bem-vindo, {{name}}" / "Welcome, {{name}}"
 - `home.hero.leads_label` → "Leads" / "Leads"
 - `home.hero.value_label` → "Valor" / "Value"
-- `lead.card.priority_hot|warm|cold|won|lost` → labels do badge traduzidos
 
 **Atualizar:**
 
@@ -269,6 +280,8 @@ Nota: o `SectionTitle` "Últimos Leads" renderiza **dentro** do `ListHeaderCompo
 **Remover:**
 
 - `home.greeting_morning`, `home.greeting_afternoon`, `home.greeting_evening`, `home.today`
+
+**Não adicionar** (já existem): `priority.low/medium/high/critical`, `status.new/assigned/contacted/converted/lost/expired` — `PriorityBadge` consome `priority.*` direto via `leadPriorityPalette.labelKey`.
 
 ### Performance
 
@@ -307,10 +320,11 @@ browser_take_screenshot home-dark.png
 - [ ] Hero card vertical com "bleed" intencional à esquerda
 - [ ] KPIs "Leads / 124" e "Valor / 2742k" empilhados, valores Playfair 48
 - [ ] Grid 2x3 de LeadCardCompact com gap 8px, padding 30px lateral
-- [ ] Cada card mostra: R$ valor, ID curto 5 chars, foto Raptor, nome, reason, hora, badge status
-- [ ] Badge `hot` em status new/contacted, `warm` em qualified/test_drive, etc.
+- [ ] Cada card mostra: R$ valor, ID curto 5 chars, foto Raptor, nome do customer, reason, hora relativa, badge de prioridade
+- [ ] PriorityBadge usa cores do `leadPriorityPalette` (low cinza, medium amarelo, high laranja, critical vermelho)
 - [ ] Tab bar inferior com `bottomBarBg` correspondente ao theme
 - [ ] Toggle dark/light: gradient, hero card, lead card, badge — todos invertem corretamente
+- [ ] Outras telas (Login, Leads, Profile, Lead Detail) também renderizam em Playfair+Manrope (efeito colateral da migração global)
 
 ### Estados a forçar
 
