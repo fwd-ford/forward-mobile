@@ -10,16 +10,18 @@ import { Ionicons } from "@expo/vector-icons";
 enableScreens(true);
 
 import {
-  Fraunces_400Regular,
-  Fraunces_600SemiBold,
-  Fraunces_700Bold,
-} from "@expo-google-fonts/fraunces";
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_500Medium_Italic,
+  PlayfairDisplay_600SemiBold,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from "@expo-google-fonts/inter";
+  Manrope_300Light,
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+} from "@expo-google-fonts/manrope";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -54,19 +56,21 @@ function RootStack() {
   const [introDone, setIntroDone] = useState(false);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  // Preload Ionicons + Fraunces (display serif) + Inter (UI sans) so first
-  // paint never shows fallback fonts or empty glyph squares (FOIT).
-  // Pre-carrega Ionicons + Fraunces + Inter; sem isso, primeiro paint usa
+  // Preload Ionicons + Playfair Display (display serif) + Manrope (UI sans)
+  // so first paint never shows fallback fonts or empty glyph squares (FOIT).
+  // Pre-carrega Ionicons + Playfair + Manrope; sem isso, primeiro paint usa
   // fonte de sistema e estraga a hierarquia tipografica.
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
-    Fraunces_400Regular,
-    Fraunces_600SemiBold,
-    Fraunces_700Bold,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium_Italic,
+    PlayfairDisplay_600SemiBold,
+    PlayfairDisplay_700Bold,
+    Manrope_300Light,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
   });
 
   // Auth check runs in parallel with the intro — whichever finishes later unblocks the router.
