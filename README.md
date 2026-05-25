@@ -60,13 +60,15 @@ ML (forward-ml)  ──── churn score por VIN ────►  API (forward-
 | 1 | **Login com email + senha** | ✅ | Autenticação via Supabase Auth, sessão persistida com `expo-secure-store` |
 | 2 | **Dashboard (Home)** | ✅ | Saudação contextual (manhã/tarde/noite), KPIs de Leads Ativos e Pipeline em BRL, lista de leads recentes |
 | 3 | **Lista de Leads** | ✅ | Filtros por status (Todos, Críticos, Hoje, Esquecidos 30d+), busca por VIN ou motivo, contagem por chip |
-| 4 | **Detalhe do Lead (Vista 360 v1)** | ✅ | VIN, prioridade, razão do score, pipeline esperado, ações (Ligar, Mensagem, Marcar contato) |
-| 5 | **Perfil do usuário** | ✅ | Avatar com upload (Câmera ou Galeria via `expo-image-picker`), persistência em Supabase Storage |
-| 6 | **Tema Dark/Light** | ✅ | Toggle manual + opção "Usar tema do sistema", persistência local em AsyncStorage |
-| 7 | **Internacionalização (i18n)** | ✅ | Português (Brasil) por padrão + Inglês, detecção automática do locale do device, picker manual |
-| 8 | **Design System "Glass Minimalist"** | ✅ | Tipografia serif (Fraunces) + sans (Inter), paleta Ford Blue, mesh gradient background, primitivo `GlassSurface` |
-| 9 | **Pull-to-refresh** | ✅ | Em Home e Leads, com haptic feedback via `expo-haptics` |
-| 10 | **Tratamento de erro com retry** | ✅ | `ErrorBanner` reutilizável, toasts em validação de form |
+| 4 | **Detalhe do Lead (Vista 360 v1)** | ✅ | Nome do cliente em destaque, prioridade, razão do score, pipeline esperado, ações (Ligar, Mensagem, Marcar contato) |
+| 5 | **Card de lead com nome do cliente** | ✅ | Nome real em destaque + VIN como subtítulo + razão humanizada (em vez de jargão técnico de ML) |
+| 6 | **Razões humanizadas por prioridade** | ✅ | "Sumiu da rede há 90 dias", "Pulou a 2ª revisão programada", etc. (mapeamento determinístico em `lib/demo-data.ts`) |
+| 7 | **Perfil do usuário** | ✅ | Avatar com upload (Câmera ou Galeria via `expo-image-picker`), persistência em Supabase Storage |
+| 8 | **Tema Dark/Light** | ✅ | Toggle manual + opção "Usar tema do sistema", persistência local em AsyncStorage |
+| 9 | **Internacionalização (i18n)** | ✅ | Português (Brasil) por padrão + Inglês, detecção automática do locale do device, picker manual |
+| 10 | **Design System "Glass Minimalist"** | ✅ | Tipografia serif (Fraunces) + sans (Inter), paleta Ford Blue, mesh gradient background, primitivo `GlassSurface` |
+| 11 | **Pull-to-refresh** | ✅ | Em Home e Leads, com haptic feedback via `expo-haptics` |
+| 12 | **Tratamento de erro com retry** | ✅ | `ErrorBanner` reutilizável + auto-refresh de token em 401 (`lib/api.ts:doFetch`) + retry transparente |
 
 Funcionalidades que **estão preparadas mas dependem do backend** (Sprint 2):
 
@@ -127,7 +129,7 @@ O atendente entra com seu email corporativo. A validação é inline; erros vêm
 
 ### 3.3 Home (Dashboard)
 
-Saudação contextual ("Boa tarde, Jvfranco08") + dois KPIs que respondem "o que eu preciso fazer hoje?": **Leads Ativos** (quantos casos abertos atribuídos a mim) e **Pipeline** (valor estimado em BRL — formatado em "k"/"M" para evitar overflow). Lista de leads recentes ordenada por prioridade.
+Saudação contextual ("Boa tarde, Avaliador") + dois KPIs que respondem "o que eu preciso fazer hoje?": **Leads Ativos** (quantos casos abertos atribuídos a mim) e **Pipeline** (valor estimado em BRL — formatado em "k"/"M" para evitar overflow). Lista de leads recentes ordenada por prioridade, cada card mostrando **nome do cliente** em destaque (não o VIN cru) e **razão humanizada** (ex: "Sumiu da rede oficial há mais de 90 dias", em vez de "Auto-generated from churn score v0.1").
 
 | Dark | Light |
 |------|-------|
@@ -135,7 +137,7 @@ Saudação contextual ("Boa tarde, Jvfranco08") + dois KPIs que respondem "o que
 
 ### 3.4 Leads
 
-Lista completa com 4 filtros via chips (mostram contagem em tempo real) e busca por VIN ou motivo. Cada card mostra prioridade colorida (ALTA / CRÍTICA / MÉDIA / BAIXA), VIN, razão do score, status e pipeline.
+Lista completa com 4 filtros via chips (mostram contagem em tempo real) e busca por VIN ou motivo. Cada card mostra prioridade colorida (ALTA / CRÍTICA / MÉDIA / BAIXA), **nome do cliente**, VIN como subtítulo, razão humanizada, status e pipeline esperado.
 
 | Dark | Light |
 |------|-------|
@@ -143,7 +145,7 @@ Lista completa com 4 filtros via chips (mostram contagem em tempo real) e busca 
 
 ### 3.5 Detalhe do Lead (Vista 360 v1)
 
-VIN no topo, badges de prioridade e status, "Por que este lead" (razão do score do modelo de ML), pipeline esperado. As três ações de outreach ficam num footer fixo: **Ligar**, **Mensagem**, **Marcar contato**.
+**Nome do cliente em destaque** (Fraunces grande), badges de prioridade e status, VIN como linha secundária, "Por que este lead" (razão humanizada do score), pipeline esperado. As três ações de outreach ficam num footer fixo: **Ligar**, **Mensagem**, **Marcar contato**.
 
 | Dark | Light |
 |------|-------|
@@ -307,12 +309,14 @@ forward-mobile/
 ├── context/                      # Providers globais (Auth, Theme, i18n)
 │
 ├── lib/
-│   ├── api.ts                    # Cliente tipado pro forward-api-java (auto-attach de token)
+│   ├── api.ts                    # Cliente tipado pro forward-api-java (auto-attach + auto-refresh em 401)
 │   ├── supabase.ts               # Cliente Supabase com SecureStore como adapter
 │   ├── auth.ts                   # useSession() hook + sign in/out
 │   ├── theme.ts                  # Tokens (cores, spacing, radius, tipografia)
-│   ├── formatBRL.ts              # Helper canônico para moeda
-│   └── displayName.ts            # Friendly name (full_name → email → "Bem-vindo")
+│   ├── format.ts                 # Helper canônico para moeda BRL
+│   ├── displayName.ts            # Friendly name (full_name → email → "Bem-vindo")
+│   ├── customer.ts               # Lookup de customer via Supabase (placeholder até API expor)
+│   └── demo-data.ts              # Overlay Sprint 1: humaniza razões + nomes + leads sintéticos extras
 │
 ├── hooks/                        # Hooks customizados
 │
@@ -371,6 +375,10 @@ API Java tem `ALLOWED_ORIGINS` configurado para incluir `http://localhost:8081` 
 5. **Pull-to-refresh em vez de WebSocket** — para o escopo do Sprint 1, refetch sob demanda é suficiente e mais simples de auditar. WebSocket para updates em tempo real entra no Sprint 2.
 
 6. **Helpers canônicos em `lib/`** — `formatBRL`, `ACTIVE_LEAD_STATUSES`, `friendlyDisplayName` foram extraídos depois que viramos a primeira rodada de QA. Antes estavam duplicados; agora são fonte única de verdade. Aprendizado: a duplicação aparece rápido quando se tem 5 telas, vale a pena refatorar cedo.
+
+7. **Overlay de enriquecimento de dados (`lib/demo-data.ts`)** — o backend Java do Sprint 1 entrega razões genéricas (`Auto-generated from churn score v0.1`) e não expõe nome do cliente na payload de listagem. Pro avaliador, isso vira "demo técnica" em vez de "produto que faz sentido". Decidimos criar um overlay client-side que: (a) humaniza a razão com base na prioridade do lead, (b) deriva um nome plausível a partir do `customer_id` via hash determinístico, (c) adiciona leads sintéticos extras pra dar variedade de cenários na demo. Quando o backend expuser dados reais, basta dropar a chamada `enrichLeads()` em `api.ts` e o overlay desaparece.
+
+8. **Auto-refresh de token em 401** — `lib/api.ts` detecta `401 Unauthorized` em qualquer request, força `supabase.auth.refreshSession()` e tenta UMA vez de novo com o novo token. Resolve o race condition clássico em que o token vence mid-sessão (ou após retorno de background) e o SDK ainda não refreshou. Falha em 401 persistente propaga normalmente.
 
 ### 5.5 Qualidade — verificação local
 
