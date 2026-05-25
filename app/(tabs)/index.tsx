@@ -258,9 +258,12 @@ const decorationStyles = StyleSheet.create({
     left: 175,
     top: 100,
   },
+  // Globe posicionado com bleed a direita: ~half dele sai pela borda
+  // direita da tela em viewport mobile (393px). Cria efeito editorial
+  // simetrico ao bleed do hero card a esquerda.
   globeWrap: {
     position: "absolute",
-    left: 69,
+    left: 185,
     top: 130,
     width: 324,
     height: 315,
@@ -277,7 +280,10 @@ function createStyles(c: ThemeColors) {
     },
     heroStatsWrap: {
       position: "absolute",
-      left: -80,
+      // bleed leve (-20): card sai um pouco da borda esquerda mantendo
+      // ar editorial, mas com texto "Leads / Valor" visivel na tela.
+      // Figma original tinha -80 mas escondia o texto inteiro em mobile.
+      left: -15,
       top: 192,
     },
     columnWrapper: {

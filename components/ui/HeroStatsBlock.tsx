@@ -46,7 +46,7 @@ function createStyles(c: ThemeColors) {
       borderRadius: 20,
       paddingHorizontal: spacing["2xl"],
       paddingVertical: spacing.lg,
-      width: 235,
+      width: 180,
       minHeight: 202,
     },
     row: {
