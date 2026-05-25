@@ -10,7 +10,6 @@ import { useEffect, useRef } from "react";
 import createGlobe from "cobe";
 
 export interface GlobeProps {
-  theme: "light" | "dark";
   size?: number;
 }
 
@@ -18,12 +17,15 @@ const BRAZIL_MARKERS = [
   { location: [-23.55, -46.63] as [number, number], size: 0.07 }, // São Paulo
 ];
 
-export default function Globe({ theme, size = 324 }: GlobeProps) {
+// Globe propositadamente theme-agnostic: esfera escura com continentes
+// brancos funciona visualmente em ambos os temas (light e dark) e EVITA
+// o problema de recriar o globo no theme toggle (DOM Components piscam
+// quando re-montam — globo "sumia" ao alternar tema).
+export default function Globe({ size = 324 }: GlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const isDark = theme === "dark";
     const globe = createGlobe(canvasRef.current, {
       devicePixelRatio: 2,
       width: size * 2,
@@ -33,15 +35,13 @@ export default function Globe({ theme, size = 324 }: GlobeProps) {
       // theta 0.3 = leve inclinacao N-S pra equilibrar hemisferios.
       phi: 5.5,
       theta: 0.3,
-      dark: isDark ? 1 : 0,
+      dark: 1,
       diffuse: 1.2,
       mapSamples: 16000,
       mapBrightness: 6,
-      // baseColor define a cor dos dots de continentes. Light mode usa
-      // dots escuros (#333) sobre esfera clara; dark usa dots brancos.
-      baseColor: isDark ? [1, 1, 1] : [0.2, 0.2, 0.2],
+      baseColor: [1, 1, 1],
       markerColor: [249 / 255, 115 / 255, 22 / 255], // #f97316 laranja
-      glowColor: isDark ? [0.05, 0.05, 0.05] : [0.95, 0.95, 0.95],
+      glowColor: [0.6, 0.6, 0.6],
       markers: BRAZIL_MARKERS,
       // onRender mantem o render loop ativo. Estatico: nao incrementa phi.
       onRender: (state) => {
@@ -52,7 +52,7 @@ export default function Globe({ theme, size = 324 }: GlobeProps) {
     return () => {
       globe.destroy();
     };
-  }, [theme, size]);
+  }, [size]);
 
   return (
     <canvas

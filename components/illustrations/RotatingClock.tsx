@@ -48,7 +48,11 @@ function RotatingClockComponent() {
       style={styles.container}
       maskElement={
         <View style={styles.maskInner}>
-          <Text style={styles.text}>{value}</Text>
+          {/* Cor do texto = cor final do gradient. Quando MaskedView nao
+              aplica (web fallback), a cor visivel ainda fica theme-aware. */}
+          <Text style={[styles.text, { color: colors.clockGradientTo }]}>
+            {value}
+          </Text>
         </View>
       }
     >
@@ -75,7 +79,6 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.clockHero,
-    color: "black", // ignorado: o MaskedView usa o alpha do texto
   },
   gradient: {
     flex: 1,

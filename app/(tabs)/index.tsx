@@ -68,14 +68,14 @@ const Greeting = memo(function Greeting({ name }: { name: string }) {
   );
 });
 
-const HeroDecoration = memo(function HeroDecoration({ isDark }: { isDark: boolean }) {
+const HeroDecoration = memo(function HeroDecoration() {
   return (
     <>
       <View style={decorationStyles.clockWrap} pointerEvents="none">
         <RotatingClock />
       </View>
       <View style={decorationStyles.globeWrap} pointerEvents="none">
-        <Globe theme={isDark ? "dark" : "light"} size={324} />
+        <Globe size={324} />
       </View>
     </>
   );
@@ -83,9 +83,8 @@ const HeroDecoration = memo(function HeroDecoration({ isDark }: { isDark: boolea
 
 export default function HomeScreen() {
   const { t } = useTranslation();
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const isDark = mode === "dark";
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,7 +167,7 @@ export default function HomeScreen() {
           <View>
             <View style={styles.heroArea}>
               <Greeting name={name} />
-              <HeroDecoration isDark={isDark} />
+              <HeroDecoration />
               {showHero ? (
                 <View style={styles.heroStatsWrap}>
                   <HeroStatsBlock items={heroItems} />
