@@ -473,6 +473,41 @@ Três rodadas de QA foram executadas com Playwright (web target), pegando 6 P0 +
 
 - [`docs/superpowers/UX_QA_REPORT.md`](docs/superpowers/UX_QA_REPORT.md) — round 1 (pré-fixes)
 
+### 7.6 Postura de segurança no client (XSS e validação de entrada)
+
+Resumo da análise de superfície XSS no mobile, complementar à disciplina de Cybersecurity (que cobra "Segurança de Entrada e Validação de Dados" — 20 pts).
+
+**O app não é estruturalmente vulnerável a XSS porque:**
+
+| Vetor clássico de XSS | Como o app trata |
+|-----------------------|------------------|
+| Prop `dangerouslySet`-`InnerHTML` (React) | **Não usado** em nenhum arquivo do repo (validado via grep) |
+| Manipulação direta de `innerHTML` / `outerHTML` | **Não usados** |
+| `WebView` carregando HTML externo | **Sem dependência** (`react-native-webview` não está no `package.json`) |
+| Render de HTML cru / markdown não sanitizado | **Sem dependência** (sem `react-native-render-html`, sem libs de markdown) |
+| Strings de usuário em `<Text>` JSX | **Auto-escape do React** — `{value}` nunca é interpretado como HTML |
+| Atributos `href` / `src` com input do user | App não monta URLs com input livre; `tel:` recebe número validado do `customer.phone` (backend), não do usuário |
+
+**Defesa em profundidade (validação de entrada):**
+
+- **Email no login** ([`lib/validation.ts:17`](lib/validation.ts#L17)): regex `^[^\s@]+@[^\s@]+\.[^\s@]+$` rejeita payloads tipo `<script>@evil.com` (espaço / `<` quebram o formato).
+- **Limite de tamanho (`maxLength`)** em todos os `TextInput`:
+  - Email: 254 chars (RFC 5321)
+  - Senha: 128 chars (cobre passphrase longa; Supabase trunca em 72 internamente)
+  - Busca em Leads: 80 chars (VIN tem 17, motivo curto cabe)
+- **Trim antes de enviar pro backend** ([`app/login.tsx:99`](app/login.tsx#L99)): `email.trim()` impede whitespace exploit em providers permissivos.
+- **Storage de credenciais sensíveis em `expo-secure-store`** (Keychain iOS / Keystore Android), não em AsyncStorage.
+
+**Limites assumidos (fora do escopo do client):**
+
+- Validação anti-SQLi / sanitização de strings persistidas é responsabilidade do **`forward-api-java`** (Spring Data JPA já parametriza queries por padrão).
+- Stored XSS via dados retornados pela API ainda assim seria mitigado pelo auto-escape do React no client.
+
+**Próximos passos sugeridos** (Sprint 2):
+
+- Adicionar **rate limiting** no login client-side (delay exponencial após 3 falhas) — complementa proteção de credential stuffing já existente no Supabase.
+- Adicionar **Content Security Policy** explícita no `app.config.js` quando o target web for produção.
+
 ---
 
 ## Licença

@@ -154,6 +154,9 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
+            // RFC 5321: total mailbox size cap = 254. Trunca no input pra
+            // bloquear payload flooding antes mesmo da validacao por regex.
+            maxLength={254}
             focused={emailFocused}
             onFocus={() => setEmailFocused(true)}
             onBlur={() => setEmailFocused(false)}
@@ -172,6 +175,9 @@ export default function LoginScreen() {
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
+            // 128 cobre passphrases longas sem permitir DoS via senha gigante.
+            // Supabase corta em 72 (bcrypt) — limitar antes evita request grande.
+            maxLength={128}
             focused={passwordFocused}
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
@@ -248,6 +254,7 @@ type UnderlineInputProps = {
   autoCapitalize?: "none" | "sentences";
   autoCorrect?: boolean;
   autoComplete?: "email" | "password";
+  maxLength?: number;
 };
 
 function UnderlineInput({
@@ -265,6 +272,7 @@ function UnderlineInput({
   autoCapitalize,
   autoCorrect,
   autoComplete,
+  maxLength,
 }: UnderlineInputProps) {
   const lineColor = error ? colors.error : focused ? colors.text : colors.border;
   return (
@@ -280,6 +288,7 @@ function UnderlineInput({
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
         autoComplete={autoComplete}
+        maxLength={maxLength}
         onFocus={onFocus}
         onBlur={onBlur}
         style={[

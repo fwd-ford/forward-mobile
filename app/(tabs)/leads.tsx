@@ -188,6 +188,9 @@ export default function LeadsScreen() {
                   placeholderTextColor={colors.textSubtle}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  // VIN tem 17 chars; motivo curto cabe folgado em 80.
+                  // Cap previne payload flooding em caso de paste acidental.
+                  maxLength={80}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                   style={[styles.searchInput, { color: colors.text }]}
