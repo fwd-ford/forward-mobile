@@ -4,6 +4,7 @@
 import Constants from "expo-constants";
 
 import { getAccessToken } from "./session";
+import { supabase } from "./supabase";
 
 // app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Fly.
 // Esse fallback abaixo so cobre se alguem rodar sem app.config.js (build quebrada).
@@ -29,15 +30,31 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function doFetch(path: string, init: RequestInit | undefined, token: string | null) {
   const headers = new Headers(init?.headers ?? {});
   headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(`${baseUrl}${path}`, { ...init, headers });
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   // Pega o JWT do Supabase a cada request. autoRefreshToken cuida da renovacao,
   // entao chamar aqui sempre devolve o token vivo (ou null se nao logado).
-  const token = await getAccessToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  let token = await getAccessToken();
+  let res = await doFetch(path, init, token);
 
-  const res = await fetch(`${baseUrl}${path}`, { ...init, headers });
+  // 401 com token vivo: provavelmente o token expirou mas o SDK ainda nao
+  // refreshou (race tipico apos trocar idioma/voltar do background). Forcamos
+  // o refresh e tentamos UMA vez. Se ainda 401, propaga.
+  if (res.status === 401 && token) {
+    const refreshed = await supabase.auth.refreshSession().catch(() => null);
+    const newToken = refreshed?.data.session?.access_token ?? (await getAccessToken());
+    if (newToken && newToken !== token) {
+      token = newToken;
+      res = await doFetch(path, init, token);
+    }
+  }
+
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as Problem | null;
     throw new ApiError(
@@ -96,15 +113,22 @@ export interface ChurnScore {
   computed_at: string;
 }
 
+// Demo enrichment: o backend Java do Sprint 1 entrega razao generica e nao
+// expoe nome do cliente; o enrichLeads adiciona razoes humanas + leads
+// sinteticos pra demo. Quando o backend expuser dados reais, dropar o
+// import e a chamada abaixo. Ver lib/demo-data.ts.
+import { enrichLeads } from "./demo-data";
+
 export const api = {
   getVehicle: (vin: string) => request<Vehicle>(`/api/v1/vehicles/${vin}`),
-  listLeads: (params: { dealerId?: string; status?: Lead["status"]; limit?: number } = {}) => {
+  listLeads: async (params: { dealerId?: string; status?: Lead["status"]; limit?: number } = {}) => {
     const qs = new URLSearchParams();
     if (params.dealerId) qs.set("dealer_id", params.dealerId);
     if (params.status) qs.set("status", params.status);
     if (params.limit) qs.set("limit", String(params.limit));
     const query = qs.toString();
-    return request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`);
+    const real = await request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`);
+    return enrichLeads(real);
   },
   getScore: (customerId: string) => request<ChurnScore>(`/api/v1/scores/${customerId}`),
 };
