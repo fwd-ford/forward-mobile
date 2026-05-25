@@ -29,25 +29,26 @@ export default function Globe({ theme, size = 324 }: GlobeProps) {
       width: size * 2,
       height: size * 2,
       // Pose centralizando America do Sul (Brasil ao centro).
-      // phi 4.1 = rotacao leste-oeste; theta 0.3 = leve inclinacao N-S.
-      phi: 4.1,
+      // phi 5.5 traz longitude -60 (centro do Brasil) pra face visivel.
+      // theta 0.3 = leve inclinacao N-S pra equilibrar hemisferios.
+      phi: 5.5,
       theta: 0.3,
       dark: isDark ? 1 : 0,
       diffuse: 1.2,
       mapSamples: 16000,
       mapBrightness: 6,
-      // TODO(globe-continents): cobe v2.0.1 nesse setup nao renderiza os
-      // dots dos continentes em WebGL2 do Chromium (verificado via Playwright
-      // QA 2026-05-25). Esfera + glow + markers funcionam, mas o mapa nao.
-      // Plano B: downgrade pra cobe@1.6.4 (estavel, conhecido por funcionar)
-      // OU portar pra @shopify/react-native-skia com projection custom.
-      baseColor: isDark ? [0.6, 0.6, 0.6] : [0.2, 0.2, 0.2],
+      // baseColor define a cor dos dots de continentes. Light mode usa
+      // dots escuros (#333) sobre esfera clara; dark usa dots brancos.
+      baseColor: isDark ? [1, 1, 1] : [0.2, 0.2, 0.2],
       markerColor: [249 / 255, 115 / 255, 22 / 255], // #f97316 laranja
       glowColor: isDark ? [0.05, 0.05, 0.05] : [0.95, 0.95, 0.95],
       markers: BRAZIL_MARKERS,
-      // onRender vazio mantem o render loop ativo sem rotacionar.
-      onRender: () => {},
-    } as Parameters<typeof createGlobe>[1]);
+      // onRender mantem o render loop ativo. Estatico: nao incrementa phi.
+      onRender: (state) => {
+        state.phi = 5.5;
+        state.theta = 0.3;
+      },
+    });
     return () => {
       globe.destroy();
     };
