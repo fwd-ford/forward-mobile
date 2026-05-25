@@ -111,7 +111,9 @@ Funcionalidades que **estão preparadas mas dependem do backend** (Sprint 2):
 
 ### 3.1 Fluxo principal em GIF
 
-> _GIF do fluxo principal (login → home → leads → detalhe → registrar contato) será adicionado aqui antes da gravação do vídeo final._
+Demonstração do caminho feliz: **Login → Home (KPIs + leads do dia) → Leads (lista filtrada) → Detalhe do Lead → Perfil**.
+
+![Demo do fluxo principal](docs/screenshots/demo-flow.gif)
 
 📁 [`docs/screenshots/`](docs/screenshots/)
 
@@ -135,11 +137,9 @@ Saudação contextual ("Boa tarde, Jvfranco08") + dois KPIs que respondem "o que
 
 Lista completa com 4 filtros via chips (mostram contagem em tempo real) e busca por VIN ou motivo. Cada card mostra prioridade colorida (ALTA / CRÍTICA / MÉDIA / BAIXA), VIN, razão do score, status e pipeline.
 
-| Dark |
-|------|
-| ![Leads escura](docs/screenshots/03-leads-dark.png) |
-
-> _Print clara de Leads será adicionada antes da entrega final (em geração)._
+| Dark | Light |
+|------|-------|
+| ![Leads escura](docs/screenshots/03-leads-dark.png) | ![Leads clara](docs/screenshots/03-leads-light.png) |
 
 ### 3.5 Detalhe do Lead (Vista 360 v1)
 
@@ -251,9 +251,11 @@ Depois: `npm run start -- --clear` (o cache do Metro precisa de reset quando `.e
 
 | Email | Senha |
 |-------|-------|
-| _(será enviado por canal privado ao professor)_ | _(idem)_ |
+| `teste@gmail.com` | `teste123` |
 
-Alternativamente, criar uma conta nova pelo Supabase Auth (link "Criar conta" no login) também funciona — o app provisiona um profile vazio automaticamente.
+Esta conta foi pré-provisionada com nome **"Avaliador FIAP"** e tem acesso de leitura aos leads de demonstração que aparecem na Home e na lista. Suficiente para validar o fluxo principal mostrado no GIF acima.
+
+Caso prefira, criar uma conta nova pelo próprio app também funciona — o Supabase Auth cuida do signup e o app provisiona um profile vazio automaticamente.
 
 ---
 
