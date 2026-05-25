@@ -17,6 +17,7 @@ import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import type { Lead } from "@/lib/api";
+import { customerNameFor } from "@/lib/demo-data";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
   leadPriorityPalette,
@@ -79,6 +80,10 @@ export function LeadCard({ lead, onPress }: LeadCardProps) {
             </Text>
           ) : null}
         </View>
+
+        <Text style={styles.customer} numberOfLines={1}>
+          {customerNameFor(lead.customer_id)}
+        </Text>
 
         <Text style={styles.vin} numberOfLines={1}>
           {lead.vin ?? "—"}
@@ -172,9 +177,16 @@ function createStyles(c: ThemeColors) {
       ...typography.caption,
       color: c.textSubtle,
     },
+    customer: {
+      ...typography.body,
+      fontWeight: "700",
+      color: c.text,
+    },
     vin: {
       ...typography.mono,
-      color: c.text,
+      fontSize: 11,
+      color: c.textMuted,
+      letterSpacing: 0.4,
     },
     reason: {
       ...typography.body,

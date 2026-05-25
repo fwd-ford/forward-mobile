@@ -35,15 +35,19 @@ export function LocalePicker({ visible, onClose }: LocalePickerProps) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel={t("cta.close")}
-      >
+      <View style={styles.backdropWrap}>
+        {/* Backdrop e card como irmaos. No web, Pressable vira <button>;
+            antes o card+options ficavam DENTRO do backdrop button, gerando
+            <button> aninhado e hydration error. Agora o button do backdrop
+            cobre absoluteFill atras, e o card e' outro node solto. */}
         <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t("cta.close")}
+        />
+        <View
           style={[styles.card, { paddingBottom: insets.bottom + spacing.md }]}
-          onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.handle} />
           <View style={styles.header}>
@@ -76,15 +80,15 @@ export function LocalePicker({ visible, onClose }: LocalePickerProps) {
               </View>
             );
           })}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    backdrop: {
+    backdropWrap: {
       flex: 1,
       backgroundColor: c.overlay,
       justifyContent: "flex-end",

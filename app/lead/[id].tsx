@@ -27,6 +27,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { haptic } from "@/lib/haptics";
 import { api, ApiError, type Lead } from "@/lib/api";
 import { getCustomerById, type Customer } from "@/lib/customer";
+import { customerNameFor } from "@/lib/demo-data";
 import { formatBRL } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
@@ -202,9 +203,9 @@ export default function LeadDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.labelCaps}>{t("lead.vin_label")}</Text>
-        <Text style={styles.vin} numberOfLines={1}>
-          {lead.vin ?? "—"}
+        <Text style={styles.labelCaps}>{t("lead.section.customer")}</Text>
+        <Text style={styles.customerName} numberOfLines={1}>
+          {customer?.full_name ?? customerNameFor(lead.customer_id)}
         </Text>
 
         {/* Priority como badge filled (urgencia comunica visualmente);
@@ -225,11 +226,9 @@ export default function LeadDetailScreen() {
           </View>
         </View>
 
-        {customer?.full_name ? (
-          <Text style={styles.metaLine}>
-            {t("lead.section.customer")} · {customer.full_name}
-          </Text>
-        ) : null}
+        <Text style={styles.metaLine}>
+          {t("lead.vin_label")} · {lead.vin ?? "—"}
+        </Text>
 
         {relativeTime ? (
           <Text style={styles.created}>
@@ -328,12 +327,11 @@ function createStyles(c: ThemeColors) {
       ...typography.labelCaps,
       color: c.textMuted,
     },
-    vin: {
-      ...typography.mono,
+    customerName: {
+      ...typography.hDisplay,
       fontSize: 32,
-      lineHeight: 36,
+      lineHeight: 38,
       color: c.text,
-      fontWeight: "700",
       letterSpacing: -0.4,
       marginBottom: spacing.sm,
     },
