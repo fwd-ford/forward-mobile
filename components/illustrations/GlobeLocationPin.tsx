@@ -6,19 +6,20 @@
 
 import { useMemo } from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/context/ThemeContext";
 import { useUserLocation } from "@/lib/useUserLocation";
 import { fontFamily, type ThemeColors } from "@/lib/theme";
 
 export interface GlobeLocationPinProps {
-  /** Posicao do pin (canto superior do icone) relativa ao parent. */
+  /** Posicao do pin (canto superior do dot) relativa ao parent. */
   style?: ViewStyle;
 }
 
-const PIN_SIZE = 18;
-const LINE_HEIGHT = 28;
+const DOT_OUTER = 14;
+const DOT_INNER = 7;
+const RING = 2;
+const LINE_HEIGHT = 22;
 const PIN_COLOR = "#f97316"; // laranja, igual ao markerColor antigo do cobe
 
 export function GlobeLocationPin({ style }: GlobeLocationPinProps) {
@@ -28,7 +29,11 @@ export function GlobeLocationPin({ style }: GlobeLocationPinProps) {
 
   return (
     <View style={[styles.container, style]} pointerEvents="none">
-      <Ionicons name="location" size={PIN_SIZE} color={PIN_COLOR} style={styles.pin} />
+      {/* Dot estilo map marker moderno: anel branco em volta + miolo
+          laranja. Sombra discreta destaca sobre o globo. */}
+      <View style={styles.dotOuter}>
+        <View style={styles.dotInner} />
+      </View>
       <View style={styles.line} />
       <View style={styles.labelWrap}>
         <Text style={styles.label} numberOfLines={1}>
@@ -44,21 +49,36 @@ function createStyles(c: ThemeColors) {
     container: {
       alignItems: "center",
     },
-    pin: {
-      // Pin com leve sombra pra destacar sobre o globo.
-      textShadowColor: "rgba(0, 0, 0, 0.4)",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
+    dotOuter: {
+      width: DOT_OUTER,
+      height: DOT_OUTER,
+      borderRadius: DOT_OUTER / 2,
+      backgroundColor: "#ffffff",
+      borderWidth: RING,
+      borderColor: "rgba(0, 0, 0, 0.12)",
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.35,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+    dotInner: {
+      width: DOT_INNER,
+      height: DOT_INNER,
+      borderRadius: DOT_INNER / 2,
+      backgroundColor: PIN_COLOR,
     },
     line: {
-      width: 1,
+      width: StyleSheet.hairlineWidth,
       height: LINE_HEIGHT,
       backgroundColor: c.text,
-      opacity: 0.7,
-      marginTop: -2,
+      opacity: 0.6,
+      marginTop: 2,
     },
     labelWrap: {
-      marginTop: 4,
+      marginTop: 2,
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 4,
