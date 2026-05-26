@@ -1,13 +1,12 @@
-// LeadCardCompact — variante quadrada 170x115 do LeadCard pra grid 2x3
-// na home (Figma node 1:2 / 8:55). Mostra valor + ID curto + foto Raptor
-// + nome do customer + reason + hora relativa + PriorityBadge.
+// LeadCardCompact — card editorial pra grid 2x3 da home. Sem foto, com
+// hierarquia tipografica casando com a estetica da home: valor em
+// Playfair Italic (ecoa o "Ultimos Leads" + KPI labels do hero), nome
+// em Manrope Medium, reason em Manrope Light, ID + tempo no rodape.
 // Distinta do LeadCard "lista" que continua em /leads.
-// Card compacto pra grid da home redesign 2026-05-25.
 
 import { useMemo, useRef } from "react";
 import {
   Animated,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -21,17 +20,15 @@ import type { Lead } from "@/lib/api";
 import { customerNameFor } from "@/lib/demo-data";
 import { haptic } from "@/lib/haptics";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { spacing, typography, type ThemeColors } from "@/lib/theme";
+import { fontFamily, spacing, typography, type ThemeColors } from "@/lib/theme";
 
-// Format currency com centavos: "R$ 1.987,32". Diferente de lib/format
-// que omite centavos pra outras telas — aqui na home queremos visualizar
-// o valor completo dado o estilo editorial do card (Figma node 8:72).
-const BRL_WITH_CENTS = new Intl.NumberFormat("pt-BR", {
+// Format currency sem centavos: "R$ 1.987". Valor focal limpo, sem
+// truncar com badge ao lado. Mantemos o "R$" pra clareza monetaria.
+const BRL_NO_CENTS = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
+  maximumFractionDigits: 0,
 });
-
-const raptorAsset = require("@/assets/images/raptor-card.png");
 
 export interface LeadCardCompactProps {
   lead: Lead;
@@ -39,7 +36,7 @@ export interface LeadCardCompactProps {
 }
 
 const SCALE_PRESSED = 0.97;
-const CARD_HEIGHT = 115;
+const CARD_HEIGHT = 130;
 const ID_LENGTH = 5;
 
 function shortId(id: string): string {
@@ -56,7 +53,7 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
   const relativeTime = formatRelativeTime(lead.created_at, t);
   const valueText =
     lead.expected_value_brl != null
-      ? BRL_WITH_CENTS.format(lead.expected_value_brl)
+      ? BRL_NO_CENTS.format(lead.expected_value_brl)
       : "—";
 
   const handlePressIn = () => {
@@ -80,29 +77,27 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
 
   const body = (
     <View style={styles.card}>
+      {/* Topo: valor focal em Playfair Italic + badge prioridade */}
       <View style={styles.topRow}>
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
         <PriorityBadge priority={lead.priority} style={styles.badge} />
       </View>
-      <Text style={styles.id} numberOfLines={1}>
-        ID:{shortId(lead.id)}
-      </Text>
-      <View style={styles.imageWrap}>
-        <Image
-          source={raptorAsset}
-          style={styles.image}
-          resizeMode="cover"
-          accessible={false}
-        />
-      </View>
+
+      {/* Identidade: nome do customer destacado + reason ao lado */}
       <Text style={styles.customer} numberOfLines={1}>
         {customer}
       </Text>
+      <Text style={styles.reason} numberOfLines={2}>
+        {lead.reason ?? ""}
+      </Text>
+
+      {/* Rodape: linha sutil separando + id mono + relative time */}
+      <View style={styles.divider} />
       <View style={styles.bottomRow}>
-        <Text style={styles.reason} numberOfLines={1}>
-          {lead.reason ?? ""}
+        <Text style={styles.id} numberOfLines={1}>
+          #{shortId(lead.id)}
         </Text>
         <Text style={styles.time} numberOfLines={1}>
           {relativeTime ?? ""}
@@ -142,64 +137,76 @@ function createStyles(c: ThemeColors) {
       flex: 1,
       height: CARD_HEIGHT,
       backgroundColor: c.leadCardCompactBg,
-      borderRadius: 5,
+      borderRadius: 8,
       paddingHorizontal: 14,
-      paddingTop: 8,
-      paddingBottom: 6,
+      paddingTop: 12,
+      paddingBottom: 10,
       overflow: "hidden",
+      // Border sutil pra dar definicao sem ser pesada.
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.heroVerticalBorder,
     },
     topRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: spacing.xs,
     },
+    // Valor: focal point. Playfair Italic ecoa "Ultimos Leads" e
+    // "Leads/Valor" do hero — mantem coesao editorial.
     value: {
-      ...typography.cardValue,
+      fontFamily: fontFamily.displayItalic,
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: -0.4,
       color: c.leadCardCompactText,
       flexShrink: 1,
     },
     badge: {
       flexShrink: 0,
-    },
-    id: {
-      ...typography.cardId,
-      color: c.leadCardCompactText,
       marginTop: 2,
-    },
-    imageWrap: {
-      alignSelf: "center",
-      width: "70%",
-      height: 53,
-      marginTop: -2,
-      overflow: "hidden",
-    },
-    image: {
-      width: "144%",
-      height: "156%",
-      marginLeft: "-24%",
-      marginTop: "-36%",
     },
     customer: {
-      ...typography.cardMeta,
+      fontFamily: fontFamily.medium,
+      fontSize: 12,
+      letterSpacing: -0.2,
       color: c.leadCardCompactText,
+      marginTop: 8,
+    },
+    reason: {
+      ...typography.cardMeta,
+      fontSize: 11,
+      lineHeight: 14,
+      color: c.leadCardCompactText,
+      opacity: 0.7,
       marginTop: 2,
+      flex: 1,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.leadCardCompactText,
+      opacity: 0.15,
+      marginTop: 6,
+      marginBottom: 6,
     },
     bottomRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      gap: spacing.xs,
-      marginTop: 2,
     },
-    reason: {
-      ...typography.cardMeta,
+    id: {
+      fontFamily: fontFamily.mono,
+      fontSize: 10,
+      letterSpacing: 0.5,
       color: c.leadCardCompactText,
-      flex: 1,
+      opacity: 0.55,
     },
     time: {
-      ...typography.cardTime,
+      ...typography.cardMeta,
+      fontSize: 10,
+      letterSpacing: 0.2,
       color: c.leadCardCompactText,
+      opacity: 0.8,
     },
   });
 }
