@@ -34,6 +34,7 @@ import { IntroVideo } from "@/components/ui/IntroVideo";
 import { MeshBackground } from "@/components/ui/MeshBackground";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { NavigationThemeBridge, ThemeProvider, useTheme } from "@/context/ThemeContext";
+import { UserLocationProvider } from "@/context/UserLocationContext";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -43,7 +44,9 @@ export default function RootLayout() {
       <ThemeProvider>
         <NavigationThemeBridge>
           <LocaleProvider>
-            <RootStack />
+            <UserLocationProvider>
+              <RootStack />
+            </UserLocationProvider>
           </LocaleProvider>
         </NavigationThemeBridge>
       </ThemeProvider>

@@ -11,18 +11,21 @@ import createGlobe from "cobe";
 
 export interface GlobeProps {
   size?: number;
+  /** Latitude do marker laranja (cidade do usuario). Default SP. */
+  markerLat?: number;
+  /** Longitude do marker laranja (cidade do usuario). Default SP. */
+  markerLng?: number;
 }
-
-// Markers nativos do cobe sao dots simples sem leader-line. O design
-// final usa um pin SVG + linha + label sobreposto no RN (GlobeLocationPin),
-// entao aqui mantemos array vazio.
-const GLOBE_MARKERS: Array<{ location: [number, number]; size: number }> = [];
 
 // Globe propositadamente theme-agnostic: esfera escura com continentes
 // brancos funciona visualmente em ambos os temas (light e dark) e EVITA
 // o problema de recriar o globo no theme toggle (DOM Components piscam
 // quando re-montam — globo "sumia" ao alternar tema).
-export default function Globe({ size = 324 }: GlobeProps) {
+export default function Globe({
+  size = 324,
+  markerLat = -23.55,
+  markerLng = -46.63,
+}: GlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -43,7 +46,9 @@ export default function Globe({ size = 324 }: GlobeProps) {
       baseColor: [1, 1, 1],
       markerColor: [249 / 255, 115 / 255, 22 / 255], // #f97316 laranja
       glowColor: [0.6, 0.6, 0.6],
-      markers: GLOBE_MARKERS,
+      markers: [
+        { location: [markerLat, markerLng] as [number, number], size: 0.07 },
+      ],
       // onRender mantem o render loop ativo. Estatico: nao incrementa phi.
       onRender: (state) => {
         state.phi = 5.5;
@@ -53,7 +58,7 @@ export default function Globe({ size = 324 }: GlobeProps) {
     return () => {
       globe.destroy();
     };
-  }, [size]);
+  }, [size, markerLat, markerLng]);
 
   return (
     <canvas

@@ -120,6 +120,7 @@
     "theme_manual": "Set manually",
     "follow_system": "Use system setting",
     "language": "Language",
+    "location": "Location",
     "photo": "Photo",
     "change_photo": "Change photo",
     "change_photo_hint": "Tap to change photo",

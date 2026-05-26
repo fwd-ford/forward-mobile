@@ -26,7 +26,6 @@ import { useTranslation } from "react-i18next";
 
 import { AppBackground } from "@/components/ui/AppBackground";
 import Globe from "@/components/illustrations/Globe.dom";
-import { GlobeLocationPin } from "@/components/illustrations/GlobeLocationPin";
 import { RotatingClock } from "@/components/illustrations/RotatingClock";
 import { HeroStatsBlock, type HeroStatsItem } from "@/components/ui/HeroStatsBlock";
 import { LeadCardCompact } from "@/components/domain/LeadCardCompact";
@@ -34,6 +33,7 @@ import { LeadCardCompactSkeleton } from "@/components/domain/LeadCardCompactSkel
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTheme } from "@/context/ThemeContext";
+import { useUserLocation } from "@/context/UserLocationContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
 import { toFullName, toFriendlyFirstName } from "@/lib/displayName";
 import { formatBRL } from "@/lib/format";
@@ -69,19 +69,21 @@ const Greeting = memo(function Greeting({ name }: { name: string }) {
   );
 });
 
-const HeroDecoration = memo(function HeroDecoration() {
+const HeroDecoration = memo(function HeroDecoration({
+  markerLat,
+  markerLng,
+}: {
+  markerLat: number;
+  markerLng: number;
+}) {
   return (
     <>
       <View style={decorationStyles.clockWrap} pointerEvents="none">
         <RotatingClock />
       </View>
       <View style={decorationStyles.globeWrap} pointerEvents="none">
-        <Globe size={324} />
+        <Globe size={324} markerLat={markerLat} markerLng={markerLng} />
       </View>
-      {/* Pin + linha + label sobre o globo na posicao visual de Sao Paulo.
-          Pose estatica do globo permite hardcoded — coords sao relativas
-          ao parent (heroArea), nao ao canvas do globe. */}
-      <GlobeLocationPin style={decorationStyles.pinWrap} />
     </>
   );
 });
@@ -89,6 +91,7 @@ const HeroDecoration = memo(function HeroDecoration() {
 export default function HomeScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { city } = useUserLocation();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -172,7 +175,7 @@ export default function HomeScreen() {
           <View>
             <View style={styles.heroArea}>
               <Greeting name={name} />
-              <HeroDecoration />
+              <HeroDecoration markerLat={city.lat} markerLng={city.lng} />
               {showHero ? (
                 <View style={styles.heroStatsWrap}>
                   <HeroStatsBlock items={heroItems} />
@@ -259,7 +262,9 @@ export default function HomeScreen() {
 const decorationStyles = StyleSheet.create({
   clockWrap: {
     position: "absolute",
-    left: 175,
+    // Clock empurrado +15px pra direita (175 -> 190) pra distanciar
+    // do bleed do hero card a esquerda em viewports menores.
+    left: 190,
     top: 100,
   },
   // Globe posicionado com bleed a direita: ~half dele sai pela borda
@@ -271,15 +276,6 @@ const decorationStyles = StyleSheet.create({
     top: 130,
     width: 324,
     height: 315,
-  },
-  // Pin ancorado a Sao Paulo na pose visual estatica do globe (phi 5.5,
-  // theta 0.3). Coords estimadas empiricamente a partir do screenshot.
-  pinWrap: {
-    position: "absolute",
-    left: 250,
-    top: 280,
-    width: 100,
-    alignItems: "center",
   },
 });
 
