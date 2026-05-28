@@ -45,6 +45,17 @@ export type ThemeColors = {
   overlay: string;
   tabBar: string;
   inputBg: string;
+  // Home redesign tokens (Figma node 1:2 light / 8:55 dark).
+  bgGradientFrom: string;
+  bgGradientTo: string;
+  heroVerticalBg: string;
+  heroVerticalBorder: string;
+  clockGradientFrom: string;
+  clockGradientMid: string;
+  clockGradientTo: string;
+  leadCardCompactBg: string;
+  leadCardCompactText: string;
+  bottomBarBg: string;
 };
 
 // Ford Blue is the brand mark. Used ONLY on the FORD wordmark + logo glyph.
@@ -83,6 +94,17 @@ export const palette: Record<ThemeMode, ThemeColors> = {
     overlay: "rgba(11, 18, 32, 0.40)",
     tabBar: "rgba(255, 255, 255, 0.78)",
     inputBg: "rgba(255, 255, 255, 0.60)",
+    // Home redesign — Figma node 1:2 (light).
+    bgGradientFrom: "#f0e9e9",
+    bgGradientTo: "#4b4b4b",
+    heroVerticalBg: "rgba(255, 255, 255, 0.51)",
+    heroVerticalBorder: "#c5c5c5",
+    clockGradientFrom: "rgba(0, 0, 0, 0.09)",
+    clockGradientMid: "rgba(51, 51, 51, 0.49)",
+    clockGradientTo: "#666666",
+    leadCardCompactBg: "rgba(217, 217, 217, 0.66)",
+    leadCardCompactText: "#3a3838",
+    bottomBarBg: "rgba(238, 238, 238, 0.98)",
   },
   dark: {
     bg: "#1E1E1E",
@@ -113,23 +135,38 @@ export const palette: Record<ThemeMode, ThemeColors> = {
     overlay: "rgba(0, 0, 0, 0.6)",
     tabBar: "rgba(30, 30, 30, 0.72)",
     inputBg: "rgba(40, 40, 40, 0.55)",
+    // Home redesign — Figma node 8:55 (dark).
+    bgGradientFrom: "#4a4a4a",
+    bgGradientTo: "#0d0d0d",
+    heroVerticalBg: "rgba(0, 0, 0, 0.51)",
+    heroVerticalBorder: "#4c4c4c",
+    clockGradientFrom: "rgba(255, 255, 255, 0.09)",
+    clockGradientMid: "rgba(255, 255, 255, 0.49)",
+    clockGradientTo: "#ffffff",
+    leadCardCompactBg: "rgba(9, 9, 9, 0.66)",
+    leadCardCompactText: "#ffffff",
+    bottomBarBg: "rgba(15, 15, 15, 0.98)",
   },
 };
 
-// Font families — Fraunces (display serif) + Inter (sans body) loaded via
-// expo-google-fonts in _layout.tsx. Names below match the package exports.
-// Mono uses system stack (no bundle), with proper Windows fallback.
-// Fontes: Fraunces + Inter via @expo-google-fonts; mono fica em system stack.
+// Font families — Playfair Display (display serif) + Manrope (sans body)
+// loaded via expo-google-fonts in _layout.tsx. Keys preservadas pra que a
+// migracao ocorra sem precisar atualizar nenhum consumer (todo lugar que
+// usava Fraunces via displayBold passa a renderizar Playfair Bold, etc).
+// Mono fica em system stack (no bundle), com Windows fallback.
+// Fontes: Playfair Display + Manrope via @expo-google-fonts; mono em system stack.
 export const fontFamily = {
-  // Display serif (Fraunces) — for h-display + h-section.
-  displayRegular: "Fraunces_400Regular",
-  displaySemibold: "Fraunces_600SemiBold",
-  displayBold: "Fraunces_700Bold",
-  // Sans body (Inter) — for body, captions, labels, mono fallback.
-  regular: "Inter_400Regular",
-  medium: "Inter_500Medium",
-  semibold: "Inter_600SemiBold",
-  bold: "Inter_700Bold",
+  // Display serif (Playfair Display) — for h-display + h-section.
+  displayRegular: "PlayfairDisplay_400Regular",
+  displaySemibold: "PlayfairDisplay_600SemiBold",
+  displayBold: "PlayfairDisplay_700Bold",
+  displayItalic: "PlayfairDisplay_500Medium_Italic",
+  // Sans body (Manrope) — for body, captions, labels, mono fallback.
+  regular: "Manrope_400Regular",
+  medium: "Manrope_500Medium",
+  semibold: "Manrope_600SemiBold",
+  bold: "Manrope_700Bold",
+  light: "Manrope_300Light",
   // Mono stack (system).
   mono: Platform.select({
     ios: "Menlo",
@@ -268,12 +305,13 @@ export type Elevation = typeof elevationLight | typeof elevationDark;
 // Body / caption / label = all Inter for UI consistency.
 // Tipografia: Fraunces no display, Inter no resto. Cor vem do consumer.
 export const typography = {
-  // Display — Fraunces serif.
+  // Display — Playfair serif. hDisplay ajustado pra 36/45/-1.8 conforme
+  // Figma node 1:2 do redesign 2026-05-25 (era 5xl/44/-1.2 com Fraunces).
   hDisplay: {
-    fontFamily: fontFamily.displayBold,
-    fontSize: fontSize["5xl"],
-    lineHeight: 44,
-    letterSpacing: -1.2,
+    fontFamily: fontFamily.displayRegular,
+    fontSize: 36,
+    lineHeight: 45,
+    letterSpacing: -1.8,
   },
   hSection: {
     fontFamily: fontFamily.displaySemibold,
@@ -339,6 +377,58 @@ export const typography = {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
     letterSpacing: 0,
+  },
+  // Home redesign — Figma pixel-perfect entries (2026-05-25).
+  // Consumidos por home + componentes novos (HeroStatsBlock, LeadCardCompact,
+  // RotatingClock, PriorityBadge).
+  hKpiValue: {
+    fontFamily: fontFamily.displayRegular,
+    fontSize: 48,
+    lineHeight: 48,
+    letterSpacing: -2.4,
+  },
+  hKpiLabel: {
+    fontFamily: fontFamily.displayItalic,
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: -0.8,
+  },
+  hSectionItalic: {
+    fontFamily: fontFamily.displayItalic,
+    fontSize: 20,
+    lineHeight: 30,
+    letterSpacing: -1,
+  },
+  cardValue: {
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
+    letterSpacing: -0.7,
+  },
+  cardId: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    letterSpacing: -0.6,
+  },
+  cardMeta: {
+    fontFamily: fontFamily.light,
+    fontSize: 10,
+    letterSpacing: -0.5,
+  },
+  cardTime: {
+    fontFamily: fontFamily.light,
+    fontSize: 14,
+    letterSpacing: -0.7,
+  },
+  clockHero: {
+    fontFamily: fontFamily.regular,
+    fontSize: 80,
+    lineHeight: 80,
+    letterSpacing: -4,
+  },
+  badge: {
+    fontFamily: fontFamily.light,
+    fontSize: 10,
+    letterSpacing: -0.5,
   },
 } as const;
 

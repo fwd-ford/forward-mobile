@@ -23,3 +23,30 @@ export function friendlyDisplayName({ fullName, email }: FriendlyNameInput): str
   if (fromEmail) return fromEmail;
   return null;
 }
+
+// Capitaliza cada palavra do nome completo, tratando preposicoes em PT-BR
+// como minusculas ("Joao Victor da Silva", nao "Joao Victor Da Silva").
+// Usado quando precisamos do nome completo (ex.: greeting "Bem-vindo,
+// Joao Victor Franco") em vez do primeiro nome humanizado.
+const LOWERCASE_PARTICLES = new Set(["da", "de", "do", "das", "dos", "e"]);
+
+export function toFullName(input: string): string {
+  return input
+    .trim()
+    .split(/\s+/)
+    .map((part, i) => {
+      const lower = part.toLowerCase();
+      if (i > 0 && LOWERCASE_PARTICLES.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+export function friendlyFullName({ fullName, email }: FriendlyNameInput): string | null {
+  if (fullName) return toFullName(fullName);
+  if (email) {
+    const local = email.split("@")[0] ?? "";
+    return local ? toFriendlyFirstName(local) : null;
+  }
+  return null;
+}

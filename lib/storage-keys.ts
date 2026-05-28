@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   ONBOARDED: "@forward:onboarded",
   CURRENT_DEALER_ID: "@forward:current_dealer_id",
   LAST_USER: "@forward:last_user",
+  CITY: "@forward:city_v1",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

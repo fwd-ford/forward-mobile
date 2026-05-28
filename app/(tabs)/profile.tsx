@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 
+import { CityPicker } from "@/components/ui/CityPicker";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { LocalePicker } from "@/components/ui/LocalePicker";
@@ -29,6 +30,7 @@ import { SettingRow } from "@/components/ui/SettingRow";
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useLocale } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
+import { useUserLocation } from "@/context/UserLocationContext";
 import { signOut } from "@/lib/auth";
 import { deleteAvatar, uploadAvatar } from "@/lib/avatar-upload";
 import { friendlyDisplayName } from "@/lib/displayName";
@@ -48,11 +50,13 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { colors, mode, toggleTheme, isOverridden, resetToSystem } = useTheme();
   const { locale } = useLocale();
+  const { city } = useUserLocation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, setState] = useState<ProfileState | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [localePickerOpen, setLocalePickerOpen] = useState(false);
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const [showPhotoActions, setShowPhotoActions] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
@@ -145,6 +149,11 @@ export default function ProfileScreen() {
   const onOpenLocalePicker = useCallback(() => {
     haptic.light();
     setLocalePickerOpen(true);
+  }, []);
+
+  const onOpenCityPicker = useCallback(() => {
+    haptic.light();
+    setCityPickerOpen(true);
   }, []);
 
   if (!state) return <LoadingScreen label={t("loading.profile")} />;
@@ -260,6 +269,26 @@ export default function ProfileScreen() {
           ) : null}
         </GlassSurface>
 
+        {/* Localizacao — cidade exibida no marker do globo da home.
+            Default Sao Paulo, persistida em AsyncStorage via Context. */}
+        <Text style={styles.sectionLabel}>{t("profile.location")}</Text>
+        <GlassSurface variant="thin" radius={20} style={styles.sectionGroup}>
+          <Pressable
+            onPress={onOpenCityPicker}
+            style={({ pressed }) => [pressed && styles.pressedSoft]}
+            accessibilityRole="button"
+            accessibilityLabel={`${t("profile.location")}: ${city.label}`}
+          >
+            <SettingRow
+              icon="location-outline"
+              label={city.name}
+              value={city.region}
+              emphasis="label"
+              right={<Ionicons name="chevron-down" size={16} color={colors.textSubtle} />}
+            />
+          </Pressable>
+        </GlassSurface>
+
         {/* Idioma — section header "IDIOMA" + row mostra o idioma SELECIONADO
             como label (em vez de duplicar "Idioma"). Value vira o short code. */}
         <Text style={styles.sectionLabel}>{t("profile.language")}</Text>
@@ -302,6 +331,7 @@ export default function ProfileScreen() {
       />
 
       <LocalePicker visible={localePickerOpen} onClose={() => setLocalePickerOpen(false)} />
+      <CityPicker visible={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
     </View>
   );
 }
