@@ -39,8 +39,10 @@ const SCALE_PRESSED = 0.97;
 const CARD_HEIGHT = 130;
 const ID_LENGTH = 5;
 
+// Tail of the id: seeded/sequential UUIDs share their prefix, so the head
+// would render the same tag on every card.
 function shortId(id: string): string {
-  return id.replace(/-/g, "").slice(0, ID_LENGTH).toUpperCase();
+  return id.replace(/-/g, "").slice(-ID_LENGTH).toUpperCase();
 }
 
 export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {

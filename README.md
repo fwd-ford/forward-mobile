@@ -92,6 +92,12 @@ Capturas do **APK de release rodando no emulador Android** (Pixel, Android 15, G
 |---|---|
 | ![Home claro](docs/screenshots/android/07-home-light.png) | ![Detalhe claro](docs/screenshots/android/08-lead-detail-light.png) |
 
+**Integração real com a forward-api-java (JWT)**: o APK logado como `atendente@forward.dev`, com os dados da concessionária dele vindos da API e o status persistido via `PATCH /api/v1/leads/{id}`.
+
+| Detalhe (dados da API) | Status salvo na API | Perfil com o papel do JWT |
+|---|---|---|
+| ![API detalhe](docs/screenshots/android/09-api-real-lead-detail.png) | ![API status](docs/screenshots/android/10-api-real-status-atualizado.png) | ![API perfil](docs/screenshots/android/11-api-real-perfil-jwt.png) |
+
 ---
 
 ## 4. Arquitetura
@@ -205,7 +211,7 @@ O workflow [`android-apk.yml`](.github/workflows/android-apk.yml) faz o mesmo bu
 | 1 | Abrir o app | Intro → Login | ✅ |
 | 2 | Login com credenciais inválidas | Mensagem "E-mail ou senha inválidos." | ✅ |
 | 3 | Servidor fora do ar | Aviso + botão de modo demonstração destacado | ✅ |
-| 4 | Entrar (modo demo ou JWT) | Home com saudação e leads priorizados | ✅ |
+| 4 | Entrar com JWT (API local) e no modo demo | Home com saudação e leads priorizados da concessionária do usuário | ✅ |
 | 5 | Aba Leads, filtrar por status, abrir um lead | Detalhe com cliente, veículo, risco e valor | ✅ |
 | 6 | Marcar contato, depois Converter | Toast de sucesso e status atualizado | ✅ |
 | 7 | Perfil: trocar tema e idioma | UI atualiza na hora | ✅ |
