@@ -32,8 +32,8 @@ O atendente abre o app e vê os leads do dia, priorizados pelo risco de abandono
 
 | Item | Valor |
 |---|---|
-| Versão | **3.0.0** (versionCode 3), Sprint 3 |
-| Download | Página de [Releases](https://github.com/fwd-ford/forward-mobile/releases/latest), arquivo `ForwardService-v3.0.0.apk` |
+| Versão | **3.0.1** (versionCode 4), Sprint 3 |
+| Download | Página de [Releases](https://github.com/fwd-ford/forward-mobile/releases/latest), arquivo `ForwardService-v3.0.1.apk` |
 | Android | 7.0+ (minSdk 24). ABIs `arm64-v8a` (celulares) e `x86_64` (emulador) |
 | Pacote | `com.fwdford.forwardservice` |
 
@@ -45,7 +45,7 @@ O atendente abre o app e vê os leads do dia, priorizados pelo risco de abandono
 **Instalar num emulador (Android Studio)**
 
 ```bash
-adb install -r ForwardService-v3.0.0.apk
+adb install -r ForwardService-v3.0.1.apk
 ```
 
 **Como entrar**
@@ -153,7 +153,7 @@ npx expo start            # a = Android, w = web
 
 | Variável | Exemplo | Uso |
 |---|---|---|
-| `EXPO_PUBLIC_API_URL` | `http://10.0.2.2:8080` (emulador) · `http://192.168.x.x:8080` (celular na mesma rede) | URL da API. Padrão: `https://forwardservice-api.onrender.com` (Render) |
+| `EXPO_PUBLIC_API_URL` | `http://10.0.2.2:8080` (emulador) · `http://192.168.x.x:8080` (celular na mesma rede) | URL da API. Padrão: `https://forward-api-java.onrender.com` (Render) |
 | `ALLOW_HTTP` | `1` | Só em builds de teste local: libera HTTP. O APK oficial é HTTPS-only |
 
 ---

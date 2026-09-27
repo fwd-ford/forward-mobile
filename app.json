@@ -2,7 +2,7 @@
   "expo": {
     "name": "ForwardService",
     "slug": "forward-mobile",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "orientation": "portrait",
     "scheme": "forwardservice",
     "userInterfaceStyle": "automatic",
@@ -17,11 +17,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fwdford.forwardservice",
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "package": "com.fwdford.forwardservice",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1E1E1E"
