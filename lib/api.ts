@@ -18,13 +18,16 @@ import {
 import { canTransition } from "./lead-status";
 import { getAccessToken, isDemoSession, setSession, type SessionUser } from "./session";
 
-// app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Fly.
+// app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Render.
 export const API_BASE_URL =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
-  "https://forward-api-java.fly.dev";
+  "https://forwardservice-api.onrender.com";
 
 // Fail fast instead of hanging on a dead backend (mobile networks can stall).
-const REQUEST_TIMEOUT_MS = 12_000;
+const REQUEST_TIMEOUT_MS = 20_000;
+// Render's free plan sleeps after 15 min idle; the first request after that
+// can take ~1 min while the container boots, so login waits longer.
+const COLD_START_TIMEOUT_MS = 75_000;
 
 export interface Problem {
   type: string;
@@ -49,13 +52,18 @@ export class ApiError extends Error {
   }
 }
 
-async function doFetch(path: string, init: RequestInit | undefined, token: string | null) {
+async function doFetch(
+  path: string,
+  init: RequestInit | undefined,
+  token: string | null,
+  timeoutMs: number = REQUEST_TIMEOUT_MS,
+) {
   const headers = new Headers(init?.headers ?? {});
   headers.set("Content-Type", "application/json");
   headers.set("Accept", "application/json, application/problem+json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(`${API_BASE_URL}${path}`, { ...init, headers, signal: controller.signal });
   } catch {
@@ -71,10 +79,14 @@ async function doFetch(path: string, init: RequestInit | undefined, token: strin
   }
 }
 
-async function request<T>(path: string, init?: RequestInit, opts: { auth?: boolean } = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  opts: { auth?: boolean; timeoutMs?: number } = {},
+): Promise<T> {
   const auth = opts.auth ?? true;
   const token = auth ? await getAccessToken() : null;
-  const res = await doFetch(path, init, token);
+  const res = await doFetch(path, init, token, opts.timeoutMs);
 
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as Problem | null;
@@ -84,6 +96,11 @@ async function request<T>(path: string, init?: RequestInit, opts: { auth?: boole
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+/** Fire-and-forget GET /health so a sleeping free-plan server starts booting early. */
+export function wakeUpServer(): void {
+  void fetch(`${API_BASE_URL}/health`).catch(() => undefined);
 }
 
 function demoDelay<T>(value: T, ms = 250): Promise<T> {
@@ -165,7 +182,7 @@ export const api = {
     request<LoginResponse>(
       "/api/v1/auth/login",
       { method: "POST", body: JSON.stringify({ email, password }) },
-      { auth: false },
+      { auth: false, timeoutMs: COLD_START_TIMEOUT_MS },
     ),
 
   me: async (): Promise<SessionUser> =>

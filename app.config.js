@@ -6,7 +6,7 @@
 //   ALLOW_HTTP=1         so para builds de teste local (emulador -> http://10.0.2.2:8080);
 //                        o APK de release fica HTTPS-only (cleartext bloqueado).
 
-const DEFAULT_API_URL = "https://forward-api-java.fly.dev";
+const DEFAULT_API_URL = "https://forwardservice-api.onrender.com";
 const allowHttp = process.env.ALLOW_HTTP === "1";
 
 module.exports = ({ config }) => ({

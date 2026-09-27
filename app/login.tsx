@@ -79,6 +79,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   // True when the API is unreachable: the demo CTA gets promoted.
   const [offline, setOffline] = useState(false);
+  // Login taking long = server waking up (free hosting plan); tell the user.
+  const [slow, setSlow] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -99,6 +101,7 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
+    const slowTimer = setTimeout(() => setSlow(true), 5000);
     try {
       await signInWithEmail(email.trim(), password);
       haptic.success();
@@ -121,6 +124,8 @@ export default function LoginScreen() {
       }
       shake();
     } finally {
+      clearTimeout(slowTimer);
+      setSlow(false);
       setLoading(false);
     }
   }
@@ -222,6 +227,7 @@ export default function LoginScreen() {
           {serverError ? (
             <Text style={styles.serverErrorText}>{serverError}</Text>
           ) : null}
+          {loading && slow ? <Text style={styles.slowText}>{t("auth.waking_server")}</Text> : null}
         </Animated.View>
 
         <View style={styles.footer}>
@@ -427,6 +433,11 @@ function createStyles(c: ThemeColors) {
     serverErrorText: {
       ...typography.caption,
       color: c.error,
+      marginTop: spacing.sm,
+    },
+    slowText: {
+      ...typography.caption,
+      color: c.textMuted,
       marginTop: spacing.sm,
     },
     footer: { gap: spacing.sm, marginTop: "auto", paddingTop: spacing["3xl"] },

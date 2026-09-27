@@ -27,7 +27,8 @@
     "rate_limited": "Too many attempts. Wait a minute and try again.",
     "demo_cta": "Explore in demo mode",
     "demo_hint": "Fictitious data, works offline.",
-    "fill_test_user": "Use test user"
+    "fill_test_user": "Use test user",
+    "waking_server": "Waking up the server. The first access can take up to 1 minute…"
   },
   "tabs": {
     "home": "Home",

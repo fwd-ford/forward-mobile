@@ -112,7 +112,7 @@ flowchart LR
   ML["forward-ml<br/>churn score"] --> PG
 ```
 
-- **Um único backend.** Todas as chamadas vão para a forward-api-java, que valida o JWT, aplica o perfil (ATENDENTE/GESTOR/ADMIN) e restringe os dados à concessionária do usuário. O app não acessa o banco direto.
+- **Um único backend.** Todas as chamadas vão para a forward-api-java (hospedada no Render, com banco PostgreSQL no Supabase), que valida o JWT, aplica o perfil (ATENDENTE/GESTOR/ADMIN) e restringe os dados à concessionária do usuário. O app não acessa o banco direto.
 - **Sessão** (`lib/session.ts`): o token, a validade e os dados do usuário ficam criptografados no **SecureStore** (Android Keystore). O token expira e é descartado antes de ser reenviado. Um 401 limpa a sessão e o roteador volta ao login.
 - **Modo demonstração** (`lib/demo-data.ts`): usa os mesmos formatos da API e faz as mutações em memória, então todos os fluxos funcionam sem rede.
 - **Regras do funil** (`lib/lead-status.ts`): são as mesmas transições que a API valida.
@@ -147,7 +147,7 @@ npx expo start            # a = Android, w = web
 
 | Variável | Exemplo | Uso |
 |---|---|---|
-| `EXPO_PUBLIC_API_URL` | `http://10.0.2.2:8080` (emulador) · `http://192.168.x.x:8080` (celular na mesma rede) | URL da API. Padrão: `https://forward-api-java.fly.dev` |
+| `EXPO_PUBLIC_API_URL` | `http://10.0.2.2:8080` (emulador) · `http://192.168.x.x:8080` (celular na mesma rede) | URL da API. Padrão: `https://forwardservice-api.onrender.com` (Render) |
 | `ALLOW_HTTP` | `1` | Só em builds de teste local: libera HTTP. O APK oficial é HTTPS-only |
 
 ---
@@ -188,7 +188,7 @@ O workflow [`android-apk.yml`](.github/workflows/android-apk.yml) faz o mesmo bu
 | JWT criptografado em repouso (SecureStore/Keystore), nunca em AsyncStorage | `lib/session.ts` |
 | Expiração respeitada no cliente (margem de 30 s); 401 limpa a sessão | `lib/auth.ts`, `lib/api.ts` |
 | APK de release HTTPS-only (cleartext bloqueado via `expo-build-properties`) | `app.config.js` |
-| Timeout de 12 s por requisição e erro amigável quando o backend cai | `lib/api.ts` |
+| Timeout por requisição (20 s; 75 s no login por causa do *cold start* do plano gratuito do Render), ping de aquecimento ao abrir o app e erro amigável quando o backend cai | `lib/api.ts`, `app/_layout.tsx` |
 | Validação de entrada no login (formato de e-mail e limites de tamanho) | `lib/validation.ts`, `app/login.tsx` |
 | Minimização de dados: a foto de perfil fica só no aparelho, e o WhatsApp exige ação do atendente (nada é enviado sozinho) | `lib/profile.ts`, `app/lead/[id].tsx` |
 | Permissões mínimas: só câmera; microfone e overlay bloqueados | `app.json` |

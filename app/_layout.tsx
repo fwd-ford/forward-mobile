@@ -35,6 +35,7 @@ import { MeshBackground } from "@/components/ui/MeshBackground";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { NavigationThemeBridge, ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { UserLocationProvider } from "@/context/UserLocationContext";
+import { wakeUpServer } from "@/lib/api";
 import { loadSession, onSessionChange, type Session } from "@/lib/session";
 
 export default function RootLayout() {
@@ -78,6 +79,8 @@ function RootStack() {
   // Auth check runs in parallel with the intro — whichever finishes later unblocks the router.
   // Verificacao de sessao roda em paralelo com a intro — o mais lento destrava o router.
   useEffect(() => {
+    // Start booting a sleeping backend while the intro video plays.
+    wakeUpServer();
     void loadSession().then((s) => {
       setSession(s);
       setReady(true);
