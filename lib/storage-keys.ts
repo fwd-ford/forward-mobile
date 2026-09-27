@@ -13,6 +13,8 @@ export const STORAGE_KEYS = {
   CURRENT_DEALER_ID: "@forward:current_dealer_id",
   LAST_USER: "@forward:last_user",
   CITY: "@forward:city_v1",
+  // Per-user avatar URI (device-local, suffix = user id).
+  AVATAR_PREFIX: "@forward:avatar:",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

@@ -35,8 +35,7 @@ import { MeshBackground } from "@/components/ui/MeshBackground";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { NavigationThemeBridge, ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { UserLocationProvider } from "@/context/UserLocationContext";
-import { supabase } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { loadSession, onSessionChange, type Session } from "@/lib/session";
 
 export default function RootLayout() {
   return (
@@ -79,12 +78,12 @@ function RootStack() {
   // Auth check runs in parallel with the intro — whichever finishes later unblocks the router.
   // Verificacao de sessao roda em paralelo com a intro — o mais lento destrava o router.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+    void loadSession().then((s) => {
+      setSession(s);
       setReady(true);
     });
-    const sub = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    return () => sub.data.subscription.unsubscribe();
+    // Sign-in, sign-out and token expiry (401 from the API) all flow through here.
+    return onSessionChange(setSession);
   }, []);
 
   useGuardedRedirect(ready && introDone && themeHydrated, session);

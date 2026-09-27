@@ -5,7 +5,8 @@
   "common": {
     "retry": "Tentar de novo",
     "coming_soon": "Em breve",
-    "back": "Voltar"
+    "back": "Voltar",
+    "demo_badge": "Modo demonstração"
   },
   "intro": {
     "skip": "Pular"
@@ -19,9 +20,14 @@
     "subtitle": "Entre para acessar seus leads.",
     "loading": "Carregando",
     "signing_in": "Entrando...",
-    "error": "Não foi possível entrar. Verifique suas credenciais.",
+    "error": "E-mail ou senha inválidos.",
     "forgot_password": "Esqueci minha senha",
-    "forgot_help": "Em breve. Por enquanto, peça um reset ao seu admin."
+    "forgot_help": "Peça a redefinição de senha ao administrador da sua concessionária.",
+    "server_unavailable": "Servidor indisponível no momento. Você pode explorar o app no modo demonstração.",
+    "rate_limited": "Muitas tentativas. Aguarde um minuto e tente de novo.",
+    "demo_cta": "Explorar em modo demonstração",
+    "demo_hint": "Dados fictícios, funciona sem internet.",
+    "fill_test_user": "Usar usuário de teste"
   },
   "tabs": {
     "home": "Início",
@@ -72,10 +78,19 @@
     },
     "actions": {
       "call": "Ligar",
-      "message": "Mensagem",
-      "mark_contacted": "Marcar contato"
+      "message": "WhatsApp",
+      "mark_contacted": "Marcar contato",
+      "mark_converted": "Converter",
+      "done": "Concluído"
     },
-    "not_found": "Lead não encontrado"
+    "not_found": "Lead não encontrado",
+    "status_updated": "Status atualizado para “{{status}}”",
+    "status_update_failed": "Não foi possível atualizar o status",
+    "invalid_transition": "Esse lead não pode ir para “{{status}}”.",
+    "whatsapp_message": "Olá, {{name}}! Aqui é da {{dealer}}. Notamos que a revisão do seu {{model}} está próxima. Podemos agendar?",
+    "churn": "Risco de abandono",
+    "vehicle": "Veículo",
+    "no_phone": "Cliente sem telefone cadastrado"
   },
   "leads": {
     "title": "Leads",
@@ -134,7 +149,14 @@
     "photo_updated": "Foto atualizada",
     "photo_failed": "Não foi possível enviar a foto",
     "photo_removed": "Foto removida",
-    "photo_remove_failed": "Não foi possível remover a foto"
+    "photo_remove_failed": "Não foi possível remover a foto",
+    "role": "Perfil de acesso",
+    "dealer": "Concessionária",
+    "roles": {
+      "ATENDENTE": "Atendente",
+      "GESTOR": "Gestor",
+      "ADMIN": "Administrador"
+    }
   },
   "cta": {
     "close": "Fechar",

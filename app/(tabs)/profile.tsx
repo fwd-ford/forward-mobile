@@ -38,7 +38,7 @@ import { haptic } from "@/lib/haptics";
 import { pickFromCamera, pickFromLibrary, type PickedImage } from "@/lib/image-picker";
 import { LOCALE_LABEL, LOCALE_SHORT } from "@/lib/locale";
 import { fetchMyProfile, updateMyProfile, type Profile } from "@/lib/profile";
-import { supabase } from "@/lib/supabase";
+import { isDemoSession } from "@/lib/session";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 type ProfileState = {
@@ -66,11 +66,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     void (async () => {
-      const [authRes, profile] = await Promise.all([
-        supabase.auth.getUser(),
-        fetchMyProfile().catch(() => null),
-      ]);
-      setState({ email: authRes.data.user?.email ?? null, profile });
+      const profile = await fetchMyProfile().catch(() => null);
+      setState({ email: profile?.email ?? null, profile });
     })();
   }, []);
 
@@ -232,6 +229,30 @@ export default function ProfileScreen() {
             <Text style={styles.photoHint}>{t("profile.change_photo_hint")}</Text>
           )}
         </View>
+
+        {/* Acesso: perfil (role do JWT) + concessionaria; define o que a API libera. */}
+        {profile ? (
+          <>
+            <Text style={styles.sectionLabel}>{t("profile.role")}</Text>
+            <GlassSurface variant="thin" radius={20} style={styles.sectionGroup}>
+              <SettingRow
+                icon="shield-checkmark-outline"
+                label={t("profile.role")}
+                value={t(`profile.roles.${profile.role}`)}
+                divider
+              />
+              <SettingRow
+                icon="business-outline"
+                label={t("profile.dealer")}
+                value={profile.dealer_name ?? "Ford Brasil"}
+                divider={isDemoSession()}
+              />
+              {isDemoSession() ? (
+                <SettingRow icon="sparkles-outline" label={t("common.demo_badge")} value="Offline" />
+              ) : null}
+            </GlassSurface>
+          </>
+        ) : null}
 
         {/* Aparencia section — glass group, rows separadas por hairline */}
         <Text style={styles.sectionLabel}>{t("profile.appearance")}</Text>

@@ -1,11 +1,16 @@
 {
-  "app": { "name": "ForwardService" },
+  "app": {
+    "name": "ForwardService"
+  },
   "common": {
     "retry": "Try again",
     "coming_soon": "Coming soon",
-    "back": "Back"
+    "back": "Back",
+    "demo_badge": "Demo mode"
   },
-  "intro": { "skip": "Skip" },
+  "intro": {
+    "skip": "Skip"
+  },
   "auth": {
     "sign_in": "Sign in",
     "email": "Email",
@@ -15,9 +20,14 @@
     "subtitle": "Sign in to access your leads.",
     "loading": "Loading",
     "signing_in": "Signing in...",
-    "error": "Could not sign in. Check your credentials.",
+    "error": "Invalid e-mail or password.",
     "forgot_password": "Forgot password",
-    "forgot_help": "Coming soon. For now, ask your admin to reset it."
+    "forgot_help": "Ask your dealership administrator to reset your password.",
+    "server_unavailable": "Server unavailable right now. You can explore the app in demo mode.",
+    "rate_limited": "Too many attempts. Wait a minute and try again.",
+    "demo_cta": "Explore in demo mode",
+    "demo_hint": "Fictitious data, works offline.",
+    "fill_test_user": "Use test user"
   },
   "tabs": {
     "home": "Home",
@@ -68,10 +78,19 @@
     },
     "actions": {
       "call": "Call",
-      "message": "Message",
-      "mark_contacted": "Mark contacted"
+      "message": "WhatsApp",
+      "mark_contacted": "Mark contacted",
+      "mark_converted": "Convert",
+      "done": "Done"
     },
-    "not_found": "Lead not found"
+    "not_found": "Lead not found",
+    "status_updated": "Status updated to “{{status}}”",
+    "status_update_failed": "Could not update the status",
+    "invalid_transition": "This lead cannot move to “{{status}}”.",
+    "whatsapp_message": "Hi {{name}}! This is {{dealer}}. Your {{model}} service is due soon. Shall we book it?",
+    "churn": "Churn risk",
+    "vehicle": "Vehicle",
+    "no_phone": "Customer has no phone on file"
   },
   "leads": {
     "title": "Leads",
@@ -130,7 +149,14 @@
     "photo_updated": "Photo updated",
     "photo_failed": "Could not upload photo",
     "photo_removed": "Photo removed",
-    "photo_remove_failed": "Could not remove photo"
+    "photo_remove_failed": "Could not remove photo",
+    "role": "Access profile",
+    "dealer": "Dealership",
+    "roles": {
+      "ATENDENTE": "Attendant",
+      "GESTOR": "Manager",
+      "ADMIN": "Administrator"
+    }
   },
   "cta": {
     "close": "Close",

@@ -4,6 +4,8 @@
 // Bootstrap do i18n: locale inicial via device; LocaleContext aplica override
 // persistido depois.
 
+// Hermes (Android) ships without Intl.PluralRules; i18next needs it for plurals.
+import "intl-pluralrules";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { NativeModules, Platform } from "react-native";

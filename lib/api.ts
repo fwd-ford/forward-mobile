@@ -1,16 +1,30 @@
-// Typed client for the forward-api-java REST endpoints.
-// Cliente tipado para o forward-api-java.
+// Typed client for the forward-api-java REST endpoints (JWT issued by the API).
+// Every call is routed to the offline demo store when the session is "demo".
+// Cliente tipado para o forward-api-java; em modo demo usa o store offline.
 
 import Constants from "expo-constants";
 
-import { getAccessToken } from "./session";
-import { supabase } from "./supabase";
+import type { Customer } from "./customer";
+import {
+  DEMO_USER,
+  demoGetCustomer,
+  demoGetLead,
+  demoGetScore,
+  demoGetVehicle,
+  demoListLeads,
+  demoUpdateLead,
+  humanizeReason,
+} from "./demo-data";
+import { canTransition } from "./lead-status";
+import { getAccessToken, isDemoSession, setSession, type SessionUser } from "./session";
 
 // app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Fly.
-// Esse fallback abaixo so cobre se alguem rodar sem app.config.js (build quebrada).
-const baseUrl =
+export const API_BASE_URL =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
   "https://forward-api-java.fly.dev";
+
+// Fail fast instead of hanging on a dead backend (mobile networks can stall).
+const REQUEST_TIMEOUT_MS = 12_000;
 
 export interface Problem {
   type: string;
@@ -28,43 +42,59 @@ export class ApiError extends Error {
     this.status = problem.status;
     this.code = problem.code;
   }
+
+  /** Backend unreachable (offline, DNS, timeout, 5xx gateway) -> offer demo mode. */
+  get isUnavailable(): boolean {
+    return this.status === 0 || this.status === 502 || this.status === 503 || this.status === 504;
+  }
 }
 
 async function doFetch(path: string, init: RequestInit | undefined, token: string | null) {
   const headers = new Headers(init?.headers ?? {});
   headers.set("Content-Type", "application/json");
+  headers.set("Accept", "application/json, application/problem+json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  return fetch(`${baseUrl}${path}`, { ...init, headers });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, { ...init, headers, signal: controller.signal });
+  } catch {
+    throw new ApiError({
+      type: "about:blank",
+      title: "Servidor indisponível",
+      status: 0,
+      code: "NETWORK",
+      detail: "Não foi possível conectar ao servidor da ForwardService.",
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  // Pega o JWT do Supabase a cada request. autoRefreshToken cuida da renovacao,
-  // entao chamar aqui sempre devolve o token vivo (ou null se nao logado).
-  let token = await getAccessToken();
-  let res = await doFetch(path, init, token);
-
-  // 401 com token vivo: provavelmente o token expirou mas o SDK ainda nao
-  // refreshou (race tipico apos trocar idioma/voltar do background). Forcamos
-  // o refresh e tentamos UMA vez. Se ainda 401, propaga.
-  if (res.status === 401 && token) {
-    const refreshed = await supabase.auth.refreshSession().catch(() => null);
-    const newToken = refreshed?.data.session?.access_token ?? (await getAccessToken());
-    if (newToken && newToken !== token) {
-      token = newToken;
-      res = await doFetch(path, init, token);
-    }
-  }
+async function request<T>(path: string, init?: RequestInit, opts: { auth?: boolean } = {}): Promise<T> {
+  const auth = opts.auth ?? true;
+  const token = auth ? await getAccessToken() : null;
+  const res = await doFetch(path, init, token);
 
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as Problem | null;
-    throw new ApiError(
-      body ?? { type: "about:blank", title: res.statusText, status: res.status },
-    );
+    // Expired/revoked token: drop the session so the router sends the user to /login.
+    if (res.status === 401 && auth) await setSession(null);
+    throw new ApiError(body ?? { type: "about:blank", title: res.statusText, status: res.status });
   }
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
-// Domain types mirror the forward-api-java DTOs (records under com.fwdford.forwardapi.model).
+function demoDelay<T>(value: T, ms = 250): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
+function notFound(what: string): ApiError {
+  return new ApiError({ type: "about:blank", title: "Não encontrado", status: 404, detail: `${what} não encontrado.` });
+}
+
+// Domain types mirror the forward-api-java DTOs (snake_case JSON).
 // Tipos de dominio espelham os DTOs do forward-api-java.
 
 export interface Vehicle {
@@ -89,12 +119,18 @@ export interface Lead {
   reason?: string;
   expected_value_brl?: number;
   created_at: string;
+  updated_at?: string;
+  notes?: string;
+  customer_name?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
+  churn_probability?: number;
+  segment?: string;
 }
 
 export type LeadStatus = Lead["status"];
 
-// Active = ainda no funil. Excluir explicitamente os terminais protege contra
-// novos status surgirem no backend e silenciosamente quebrarem a contagem.
+// Active = still in the funnel. Terminal statuses are excluded explicitly.
 export const ACTIVE_LEAD_STATUSES: ReadonlySet<LeadStatus> = new Set([
   "new",
   "assigned",
@@ -113,22 +149,94 @@ export interface ChurnScore {
   computed_at: string;
 }
 
-// Demo enrichment: o backend Java do Sprint 1 entrega razao generica e nao
-// expoe nome do cliente; o enrichLeads adiciona razoes humanas + leads
-// sinteticos pra demo. Quando o backend expuser dados reais, dropar o
-// import e a chamada abaixo. Ver lib/demo-data.ts.
-import { enrichLeads } from "./demo-data";
+export interface LoginResponse {
+  access_token: string;
+  token_type: "Bearer";
+  expires_in: number;
+  user: SessionUser;
+}
+
+function withReadableReason(lead: Lead): Lead {
+  return { ...lead, reason: humanizeReason(lead) };
+}
 
 export const api = {
-  getVehicle: (vin: string) => request<Vehicle>(`/api/v1/vehicles/${vin}`),
-  listLeads: async (params: { dealerId?: string; status?: Lead["status"]; limit?: number } = {}) => {
+  login: (email: string, password: string) =>
+    request<LoginResponse>(
+      "/api/v1/auth/login",
+      { method: "POST", body: JSON.stringify({ email, password }) },
+      { auth: false },
+    ),
+
+  me: async (): Promise<SessionUser> =>
+    isDemoSession() ? demoDelay(DEMO_USER) : request<SessionUser>("/api/v1/me"),
+
+  listLeads: async (params: { status?: LeadStatus; limit?: number } = {}): Promise<Lead[]> => {
+    if (isDemoSession()) return demoDelay(demoListLeads(params));
     const qs = new URLSearchParams();
-    if (params.dealerId) qs.set("dealer_id", params.dealerId);
     if (params.status) qs.set("status", params.status);
     if (params.limit) qs.set("limit", String(params.limit));
     const query = qs.toString();
-    const real = await request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`);
-    return enrichLeads(real);
+    const leads = await request<Lead[]>(`/api/v1/leads${query ? `?${query}` : ""}`);
+    return leads.map(withReadableReason);
   },
-  getScore: (customerId: string) => request<ChurnScore>(`/api/v1/scores/${customerId}`),
+
+  getLead: async (id: string): Promise<Lead> => {
+    if (isDemoSession()) {
+      const lead = demoGetLead(id);
+      if (!lead) throw notFound("Lead");
+      return demoDelay(lead);
+    }
+    return withReadableReason(await request<Lead>(`/api/v1/leads/${encodeURIComponent(id)}`));
+  },
+
+  updateLead: async (id: string, patch: { status?: LeadStatus; notes?: string }): Promise<Lead> => {
+    if (isDemoSession()) {
+      const current = demoGetLead(id);
+      if (!current) throw notFound("Lead");
+      if (patch.status && !canTransition(current.status, patch.status)) {
+        throw new ApiError({
+          type: "about:blank",
+          title: "Conflito",
+          status: 409,
+          code: "LEAD_INVALID_TRANSITION",
+          detail: "Transição de status não permitida para este lead.",
+        });
+      }
+      return demoDelay(demoUpdateLead(id, patch)!);
+    }
+    return withReadableReason(
+      await request<Lead>(`/api/v1/leads/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }),
+    );
+  },
+
+  getCustomer: async (id: string): Promise<Customer> => {
+    if (isDemoSession()) {
+      const customer = demoGetCustomer(id);
+      if (!customer) throw notFound("Cliente");
+      return demoDelay(customer);
+    }
+    return request<Customer>(`/api/v1/customers/${encodeURIComponent(id)}`);
+  },
+
+  getScore: async (customerId: string): Promise<ChurnScore> => {
+    if (isDemoSession()) {
+      const score = demoGetScore(customerId);
+      if (!score) throw notFound("Score");
+      return demoDelay(score);
+    }
+    return request<ChurnScore>(`/api/v1/customers/${encodeURIComponent(customerId)}/score`);
+  },
+
+  getVehicle: async (vin: string): Promise<Vehicle> => {
+    if (isDemoSession()) {
+      const vehicle = demoGetVehicle(vin);
+      if (!vehicle) throw notFound("Veículo");
+      return demoDelay(vehicle);
+    }
+    return request<Vehicle>(`/api/v1/vehicles/${encodeURIComponent(vin)}`);
+  },
 };

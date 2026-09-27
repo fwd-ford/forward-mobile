@@ -1,32 +1,52 @@
-// Auth hook built on Supabase. Exposes the current session and a couple of
-// actions. Lightweight by design: everything else reads `supabase.auth` directly.
-// Hook de autenticacao baseado em Supabase.
+// Authentication against forward-api-java: POST /api/v1/auth/login returns a
+// JWT (HS256, expiring) that is stored encrypted via lib/session.ts. Demo mode
+// signs in locally with the offline dataset.
+// Autenticacao na forward-api-java (JWT) + login local do modo demonstracao.
 
 import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
 
-export function useSession() {
-  const [session, setSession] = useState<Session | null>(null);
+import { api } from "./api";
+import { DEMO_USER, resetDemoData } from "./demo-data";
+import { getSession, loadSession, onSessionChange, setSession, type Session } from "./session";
+
+export async function signInWithEmail(email: string, password: string): Promise<void> {
+  const res = await api.login(email, password);
+  await setSession({
+    mode: "api",
+    accessToken: res.access_token,
+    // 30s safety margin so we never send a token that dies in flight.
+    expiresAt: Date.now() + Math.max(res.expires_in - 30, 30) * 1000,
+    user: res.user,
+  });
+}
+
+export async function signInDemo(): Promise<void> {
+  resetDemoData();
+  await setSession({ mode: "demo", accessToken: null, expiresAt: null, user: DEMO_USER });
+}
+
+export async function signOut(): Promise<void> {
+  await setSession(null);
+}
+
+/** Current session + hydration flag; re-renders on sign-in/sign-out/expiry. */
+export function useSession(): { session: Session | null; loading: boolean } {
+  const [session, setLocal] = useState<Session | null>(getSession());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+    let alive = true;
+    void loadSession().then((s) => {
+      if (!alive) return;
+      setLocal(s);
       setLoading(false);
     });
-    const sub = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    return () => sub.data.subscription.unsubscribe();
+    const off = onSessionChange((s) => setLocal(s));
+    return () => {
+      alive = false;
+      off();
+    };
   }, []);
 
   return { session, loading };
-}
-
-export async function signInWithEmail(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-}
-
-export async function signOut() {
-  await supabase.auth.signOut();
 }

@@ -21,12 +21,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
 
 import { Toast, type ToastVariant } from "@/components/ui/Toast";
 import { useTheme } from "@/context/ThemeContext";
 import { useFadeIn } from "@/hooks/useFadeIn";
 import { useShake } from "@/hooks/useShake";
-import { signInWithEmail } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
+import { signInDemo, signInWithEmail } from "@/lib/auth";
 import { haptic } from "@/lib/haptics";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 import {
@@ -75,6 +77,8 @@ export default function LoginScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // True when the API is unreachable: the demo CTA gets promoted.
+  const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -99,13 +103,34 @@ export default function LoginScreen() {
       await signInWithEmail(email.trim(), password);
       haptic.success();
       router.replace("/");
-    } catch {
+    } catch (e) {
       haptic.error();
-      setServerError(t("auth.error"));
+      if (e instanceof ApiError && e.isUnavailable) {
+        setOffline(true);
+        setServerError(t("auth.server_unavailable"));
+      } else if (e instanceof ApiError && e.status === 429) {
+        setServerError(t("auth.rate_limited"));
+      } else {
+        setServerError(t("auth.error"));
+      }
       shake();
     } finally {
       setLoading(false);
     }
+  }
+
+  async function onDemo() {
+    haptic.medium();
+    await signInDemo();
+    haptic.success();
+    router.replace("/");
+  }
+
+  // Seeded test account of forward-api-java (see its README, profile "demo").
+  function onFillTestUser() {
+    haptic.selection();
+    setEmail("atendente@forward.dev");
+    setPassword("Forward@2026");
   }
 
   function onForgotPassword() {
@@ -176,7 +201,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoComplete="password"
             // 128 cobre passphrases longas sem permitir DoS via senha gigante.
-            // Supabase corta em 72 (bcrypt) — limitar antes evita request grande.
+            // BCrypt so considera 72 bytes; limitar antes evita request grande.
             maxLength={128}
             focused={passwordFocused}
             onFocus={() => setPasswordFocused(true)}
@@ -223,6 +248,30 @@ export default function LoginScreen() {
             style={({ pressed }) => [styles.forgotWrap, pressed && { opacity: 0.6 }]}
           >
             <Text style={styles.forgotLabel}>{t("auth.forgot_password")}</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => void onDemo()}
+            accessibilityRole="button"
+            accessibilityLabel={t("auth.demo_cta")}
+            style={({ pressed }) => [
+              styles.demoCTA,
+              offline && styles.demoCTAHighlighted,
+              pressed && styles.pillCTAPressed,
+            ]}
+          >
+            <Ionicons name="sparkles-outline" size={18} color={colors.text} />
+            <Text style={styles.demoCTALabel}>{t("auth.demo_cta")}</Text>
+          </Pressable>
+          <Text style={styles.demoHint}>{t("auth.demo_hint")}</Text>
+
+          <Pressable
+            onPress={onFillTestUser}
+            hitSlop={12}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.forgotWrap, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.testUserLabel}>{t("auth.fill_test_user")}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -399,6 +448,33 @@ function createStyles(c: ThemeColors) {
       ...typography.caption,
       fontFamily: fontFamily.medium,
       color: c.textMuted,
+    },
+    demoCTA: {
+      height: 52,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
+      gap: spacing.sm,
+    },
+    demoCTAHighlighted: { borderColor: c.text, borderWidth: 1.5 },
+    demoCTALabel: {
+      ...typography.bodyLg,
+      fontFamily: fontFamily.medium,
+      color: c.text,
+    },
+    demoHint: {
+      ...typography.caption,
+      color: c.textSubtle,
+      textAlign: "center",
+    },
+    testUserLabel: {
+      ...typography.caption,
+      fontFamily: fontFamily.medium,
+      color: c.textMuted,
+      textDecorationLine: "underline",
     },
   });
 }

@@ -1,49 +1,51 @@
-// Profile helpers backed by the `public.profiles` table. Each authenticated
-// user has exactly one row keyed by their auth user id (uuid). Created
-// automatically on signup via a database trigger (see SETUP_PROFILES_AVATARS).
-// Helpers do perfil — uma linha em public.profiles por user.
+// Profile of the signed-in user. Identity (name, e-mail, role, dealer) comes
+// from the JWT session issued by forward-api-java; the avatar is a device-local
+// preference (AsyncStorage, keyed per user) so no personal photo leaves the phone.
+// Perfil do usuario logado: identidade vem da sessao JWT; a foto fica so no aparelho.
 
-import { supabase } from "./supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { getSession, loadSession, type UserRole } from "./session";
+import { STORAGE_KEYS } from "./storage-keys";
 
 export type Profile = {
   id: string;
   full_name: string | null;
+  email: string | null;
+  role: UserRole;
   avatar_url: string | null;
   dealer_id: string | null;
+  dealer_name: string | null;
   updated_at: string | null;
 };
 
-/** Returns the current user's profile row, or null when not signed in. */
+const avatarKey = (userId: string) => `${STORAGE_KEYS.AVATAR_PREFIX}${userId}`;
+
+/** Returns the current user's profile, or null when not signed in. */
 export async function fetchMyProfile(): Promise<Profile | null> {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) return null;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, dealer_id, updated_at")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+  const session = getSession() ?? (await loadSession());
+  if (!session) return null;
+  const { user } = session;
+  const avatar = await AsyncStorage.getItem(avatarKey(user.id)).catch(() => null);
+  return {
+    id: user.id,
+    full_name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar_url: avatar,
+    dealer_id: user.dealer_id,
+    dealer_name: user.dealer_name,
+    updated_at: null,
+  };
 }
 
-/** Patches a subset of the current user's profile. Returns the updated row. */
-export async function updateMyProfile(
-  patch: Partial<Pick<Profile, "full_name" | "avatar_url" | "dealer_id">>,
-): Promise<Profile> {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) throw new Error("Not authenticated");
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .update(patch)
-    .eq("id", userId)
-    .select("id, full_name, avatar_url, dealer_id, updated_at")
-    .single();
-
-  if (error) throw error;
-  return data;
+/** Only the avatar is editable on the device; identity fields are managed by ADMIN in the API. */
+export async function updateMyProfile(patch: { avatar_url: string | null }): Promise<Profile> {
+  const session = getSession() ?? (await loadSession());
+  if (!session) throw new Error("Not authenticated");
+  const key = avatarKey(session.user.id);
+  if (patch.avatar_url) await AsyncStorage.setItem(key, patch.avatar_url);
+  else await AsyncStorage.removeItem(key);
+  const profile = await fetchMyProfile();
+  return { ...profile!, updated_at: new Date().toISOString() };
 }

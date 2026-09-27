@@ -1,14 +1,9 @@
-// Customer fetch — TODO: forward-api-java has no GET /customers/{id} yet,
-// so for Sprint 1 we query Supabase directly. RLS may block depending on the
-// caller's JWT role (dealer/admin pass, vanilla authenticated does not). On
-// block, the caller treats the customer as unknown and gracefully degrades
-// (e.g. Call action stays disabled). When the Java endpoint lands, swap
-// getCustomerById here for an api.getCustomer(id) and drop the import.
-//
-// Busca customer via Supabase direto (placeholder); migrar pra forward-api-java
-// quando o GET /customers/{id} for exposto.
+// Customer lookup through forward-api-java (GET /api/v1/customers/{id}), which
+// enforces dealer scoping server-side. Returns null when not visible so the
+// caller can degrade gracefully (e.g. Call action disabled).
+// Busca do cliente via API (escopo por concessionaria aplicado no backend).
 
-import { supabase } from "./supabase";
+import { api } from "./api";
 
 export interface Customer {
   id: string;
@@ -18,12 +13,9 @@ export interface Customer {
 }
 
 export async function getCustomerById(id: string): Promise<Customer | null> {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("id, full_name, phone, opt_in_whatsapp")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as Customer;
+  try {
+    return await api.getCustomer(id);
+  } catch {
+    return null;
+  }
 }
