@@ -252,6 +252,7 @@ eas.json              perfis EAS (preview = APK)
 | Lucca Saraiva Borges | 554608 | [@lucksza](https://github.com/lucksza) |
 | Ruan Melo Vieira | 557599 | [@DevRuanVieira](https://github.com/DevRuanVieira) |
 | Rodrigo César Jimenez | 558148 | [@roji-menez](https://github.com/roji-menez) |
+| Bruno Leão | 555563 | — |
 
 Turma 3ESPZ (Engenharia de Software, FIAP). Disciplina: Mobile Development & IoT, Prof. Hércules Ramos. Challenge Ford × FIAP 2026, Sprint 3.
 
