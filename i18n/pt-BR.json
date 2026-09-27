@@ -27,7 +27,8 @@
     "rate_limited": "Muitas tentativas. Aguarde um minuto e tente de novo.",
     "demo_cta": "Explorar em modo demonstração",
     "demo_hint": "Dados fictícios, funciona sem internet.",
-    "fill_test_user": "Usar usuário de teste"
+    "fill_test_user": "Usar usuário de teste",
+    "waking_server": "Acordando o servidor. No primeiro acesso isso pode levar até 1 minuto…"
   },
   "tabs": {
     "home": "Início",
