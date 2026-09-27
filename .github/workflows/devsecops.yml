@@ -1,0 +1,33 @@
+name: DevSecOps
+
+# Report-only security pipeline (SAST, SCA, secrets, IaC, container, SBOM).
+# Findings land in Security > Code scanning; nothing here blocks a PR.
+# Definition: https://github.com/fwd-ford/.github/blob/main/.github/workflows/devsecops.yml
+# Expo / React Native app: CodeQL javascript-typescript, npm lockfile SCA.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  devsecops:
+    name: DevSecOps
+    uses: fwd-ford/.github/.github/workflows/devsecops.yml@main
+    with:
+      codeql-languages: '["javascript-typescript","actions"]'
+      semgrep-config: "p/default p/owasp-top-ten p/typescript p/react"
+      run-container-scan: false
