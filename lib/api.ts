@@ -21,7 +21,7 @@ import { getAccessToken, isDemoSession, setSession, type SessionUser } from "./s
 // app.config.js writes apiBaseUrl from EXPO_PUBLIC_API_URL or falls back to Render.
 export const API_BASE_URL =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
-  "https://forwardservice-api.onrender.com";
+  "https://forward-api-java.onrender.com";
 
 // Fail fast instead of hanging on a dead backend (mobile networks can stall).
 const REQUEST_TIMEOUT_MS = 20_000;
