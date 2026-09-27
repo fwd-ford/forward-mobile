@@ -167,7 +167,8 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + spacing["6xl"] },
+          // Edge-to-edge on Android: clear the status bar.
+          { paddingTop: insets.top, paddingBottom: insets.bottom + spacing["6xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -233,7 +234,7 @@ export default function ProfileScreen() {
         {/* Acesso: perfil (role do JWT) + concessionaria; define o que a API libera. */}
         {profile ? (
           <>
-            <Text style={styles.sectionLabel}>{t("profile.role")}</Text>
+            <Text style={styles.sectionLabel}>{t("profile.access")}</Text>
             <GlassSurface variant="thin" radius={20} style={styles.sectionGroup}>
               <SettingRow
                 icon="shield-checkmark-outline"

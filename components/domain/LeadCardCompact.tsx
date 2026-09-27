@@ -49,7 +49,7 @@ export function LeadCardCompact({ lead, onPress }: LeadCardCompactProps) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useRef(new Animated.Value(1)).current;
 
-  const customer = customerNameFor(lead.customer_id);
+  const customer = lead.customer_name ?? customerNameFor(lead.customer_id);
   const relativeTime = formatRelativeTime(lead.created_at, t);
   const valueText =
     lead.expected_value_brl != null

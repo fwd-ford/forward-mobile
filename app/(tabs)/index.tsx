@@ -36,7 +36,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTheme } from "@/context/ThemeContext";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
-import { toFullName, toFriendlyFirstName } from "@/lib/displayName";
+import { toFriendlyFirstName } from "@/lib/displayName";
 import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
@@ -123,7 +123,7 @@ export default function HomeScreen() {
     void (async () => {
       const profile = await fetchMyProfile().catch(() => null);
       if (profile?.full_name) {
-        setName(toFullName(profile.full_name));
+        setName(toFriendlyFirstName(profile.full_name));
         return;
       }
       const email = profile?.email;

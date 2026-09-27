@@ -156,7 +156,8 @@
       "ATENDENTE": "Atendente",
       "GESTOR": "Gestor",
       "ADMIN": "Administrador"
-    }
+    },
+    "access": "Acesso"
   },
   "cta": {
     "close": "Fechar",

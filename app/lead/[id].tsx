@@ -42,6 +42,9 @@ import {
   type ThemeColors,
 } from "@/lib/theme";
 
+// Room for the floating back pill so it never covers the "Cliente" eyebrow.
+const BACK_PILL_CLEARANCE = 44;
+
 export default function LeadDetailScreen() {
   // So o id vai na URL (nada de customer_id/dealer_id no historico); o lead
   // vem de GET /api/v1/leads/{id}, que ja aplica o escopo por concessionaria.
@@ -181,7 +184,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.scroll, { paddingTop: insets.top + spacing["3xl"] }]}>
+        <View style={[styles.scroll, { paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE }]}>
           <Skeleton width={120} height={14} borderRadius={radius.sm} />
           <Skeleton width={240} height={32} borderRadius={radius.sm} />
           <View style={styles.skeletonRow}>
@@ -199,7 +202,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["3xl"] }]}>
+        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE }]}>
           <ErrorBanner message={error} onRetry={() => void load()} />
         </View>
       </View>
@@ -228,7 +231,7 @@ export default function LeadDetailScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + spacing["3xl"],
+            paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE,
             paddingBottom: insets.bottom + footerHeight + spacing.lg,
           },
         ]}

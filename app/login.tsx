@@ -105,13 +105,19 @@ export default function LoginScreen() {
       router.replace("/");
     } catch (e) {
       haptic.error();
-      if (e instanceof ApiError && e.isUnavailable) {
+      // Only the API's explicit credential codes mean "wrong password". Any
+      // other failure (network, 5xx, 404, or a 401 from an outdated server
+      // that doesn't know /auth/login) means the backend can't serve logins.
+      const badCredentials =
+        e instanceof ApiError &&
+        (e.code === "AUTH_INVALID_CREDENTIALS" || e.code === "AUTH_USER_DISABLED" || e.status === 400);
+      if (e instanceof ApiError && e.status === 429) {
+        setServerError(t("auth.rate_limited"));
+      } else if (badCredentials) {
+        setServerError(t("auth.error"));
+      } else {
         setOffline(true);
         setServerError(t("auth.server_unavailable"));
-      } else if (e instanceof ApiError && e.status === 429) {
-        setServerError(t("auth.rate_limited"));
-      } else {
-        setServerError(t("auth.error"));
       }
       shake();
     } finally {

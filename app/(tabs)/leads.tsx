@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -92,6 +93,7 @@ function applyFilters(leads: Lead[], filter: FilterKey, query: string): Lead[] {
 
 export default function LeadsScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -168,7 +170,8 @@ export default function LeadsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {/* Edge-to-edge on Android: keep the header clear of the status bar. */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.labelCaps}>{subtitle}</Text>
         <Text style={styles.heroTitle} numberOfLines={1}>
           {t("leads.title")}
