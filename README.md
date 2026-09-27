@@ -74,11 +74,15 @@ Perfis de acesso (quem manda é o backend): **ATENDENTE** vê e atua nos leads d
 
 ## 3. Demonstração visual
 
-Capturas de tela do **APK de release rodando no emulador Android** (Pixel, API 35), em `docs/screenshots/android/`.
+Capturas do **APK de release rodando no emulador Android** (Pixel, Android 15, GPU do host), em `docs/screenshots/android/`. As capturas antigas da Sprint 1 (web) estão em `docs/screenshots/sprint1-web/`.
 
-| Login | Home | Leads |
+| Login | Servidor indisponível → modo demo | Home |
 |---|---|---|
-| ![Login](docs/screenshots/android/01-login.png) | ![Home](docs/screenshots/android/02-home.png) | ![Leads](docs/screenshots/android/03-leads.png) |
+| ![Login](docs/screenshots/android/01-login.png) | ![Servidor indisponível](docs/screenshots/android/01b-login-servidor-indisponivel.png) | ![Home](docs/screenshots/android/02-home.png) |
+
+| Leads | | |
+|---|---|---|
+| ![Leads](docs/screenshots/android/03-leads.png) | | |
 
 | Detalhe do lead | Status atualizado | Perfil |
 |---|---|---|
