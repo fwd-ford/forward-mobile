@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { AppBackground } from "@/components/ui/AppBackground";
 import Globe from "@/components/illustrations/Globe.dom";
 import { RotatingClock } from "@/components/illustrations/RotatingClock";
+import { SafeBoundary } from "@/components/ui/SafeBoundary";
 import { HeroStatsBlock, type HeroStatsItem } from "@/components/ui/HeroStatsBlock";
 import { LeadCardCompact } from "@/components/domain/LeadCardCompact";
 import { LeadCardCompactSkeleton } from "@/components/domain/LeadCardCompactSkeleton";
@@ -35,10 +36,9 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTheme } from "@/context/ThemeContext";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { ACTIVE_LEAD_STATUSES, api, ApiError, type Lead } from "@/lib/api";
-import { toFullName, toFriendlyFirstName } from "@/lib/displayName";
+import { toFriendlyFirstName } from "@/lib/displayName";
 import { formatBRL } from "@/lib/format";
 import { fetchMyProfile } from "@/lib/profile";
-import { supabase } from "@/lib/supabase";
 import { fontFamily, radius, spacing, typography, type ThemeColors } from "@/lib/theme";
 
 type HeroStats = {
@@ -82,7 +82,9 @@ const HeroDecoration = memo(function HeroDecoration({
         <RotatingClock />
       </View>
       <View style={decorationStyles.globeWrap} pointerEvents="none">
-        <Globe size={324} markerLat={markerLat} markerLng={markerLng} />
+        <SafeBoundary>
+          <Globe size={324} markerLat={markerLat} markerLng={markerLng} />
+        </SafeBoundary>
       </View>
     </>
   );
@@ -121,11 +123,10 @@ export default function HomeScreen() {
     void (async () => {
       const profile = await fetchMyProfile().catch(() => null);
       if (profile?.full_name) {
-        setName(toFullName(profile.full_name));
+        setName(toFriendlyFirstName(profile.full_name));
         return;
       }
-      const auth = await supabase.auth.getUser();
-      const email = auth.data.user?.email;
+      const email = profile?.email;
       if (email) {
         const local = email.split("@")[0] ?? "";
         setName(toFriendlyFirstName(local));

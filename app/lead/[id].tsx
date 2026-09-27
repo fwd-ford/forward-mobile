@@ -28,6 +28,8 @@ import { haptic } from "@/lib/haptics";
 import { api, ApiError, type Lead } from "@/lib/api";
 import { getCustomerById, type Customer } from "@/lib/customer";
 import { customerNameFor } from "@/lib/demo-data";
+import { nextPrimaryStatus } from "@/lib/lead-status";
+import { getSession, isDemoSession } from "@/lib/session";
 import { formatBRL } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
@@ -40,11 +42,12 @@ import {
   type ThemeColors,
 } from "@/lib/theme";
 
+// Room for the floating back pill so it never covers the "Cliente" eyebrow.
+const BACK_PILL_CLEARANCE = 44;
+
 export default function LeadDetailScreen() {
-  // Solo o id na URL. O JSON serializado costumava vir aqui para hidratacao
-  // instantanea, mas vazava customer_id/dealer_id na URL do browser e no
-  // historico. Trocamos por sempre carregar via load() — Sprint 1 ainda
-  // pega via listLeads(); quando o backend expuser GET /leads/{id}, trocar.
+  // So o id vai na URL (nada de customer_id/dealer_id no historico); o lead
+  // vem de GET /api/v1/leads/{id}, que ja aplica o escopo por concessionaria.
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -56,6 +59,7 @@ export default function LeadDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);
+  const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -66,12 +70,10 @@ export default function LeadDetailScreen() {
     setError(null);
     setLoading(true);
     try {
-      // Placeholder: API da Sprint 1 nao expoe GET lead por id. Quando expor,
-      // trocar por api.getLead(id) e dropar o filter abaixo.
-      const all = await api.listLeads({ limit: 200 });
-      setLead(all.find((l) => l.id === id) ?? null);
+      setLead(await api.getLead(id));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : t("home.error"));
+      if (e instanceof ApiError && e.status === 404) setLead(null);
+      else setError(e instanceof ApiError ? e.message : t("home.error"));
     } finally {
       setLoading(false);
     }
@@ -95,33 +97,65 @@ export default function LeadDetailScreen() {
     };
   }, [lead?.customer_id]);
 
-  const onComingSoonAction = useCallback(
-    (actionKey: string) => {
-      haptic.medium();
-      setToast({
-        visible: true,
-        message: `${t(actionKey)}: ${t("common.coming_soon")}`,
-        variant: "info",
-      });
-    },
-    [t],
-  );
+  const showToast = useCallback((message: string, variant: ToastVariant = "info") => {
+    setToast({ visible: true, message, variant });
+  }, []);
 
   const onCallPress = useCallback(async () => {
     if (!customer?.phone) {
-      onComingSoonAction("lead.actions.call");
+      showToast(t("lead.no_phone"));
       return;
     }
     haptic.medium();
     // tel: aceita formatos variados; deixamos o OS interpretar.
-    await Linking.openURL(`tel:${customer.phone}`).catch(() => {
-      setToast({
-        visible: true,
-        message: `${t("lead.actions.call")}: ${t("common.coming_soon")}`,
-        variant: "info",
-      });
+    await Linking.openURL(`tel:${customer.phone}`).catch(() => showToast(t("lead.no_phone")));
+  }, [customer, showToast, t]);
+
+  // WhatsApp: opens the chat with a pre-filled service reminder (the attendant
+  // still reviews and taps send). Demo mode / no opt-in uses the share sheet so
+  // a fictitious number is never messaged.
+  const onWhatsAppPress = useCallback(async () => {
+    if (!lead) return;
+    haptic.medium();
+    const session = getSession();
+    const text = t("lead.whatsapp_message", {
+      name: (customer?.full_name ?? lead.customer_name ?? customerNameFor(lead.customer_id)).split(" ")[0],
+      dealer: session?.user.dealer_name ?? "Ford",
+      model: lead.vehicle_model ?? "Ford",
     });
-  }, [customer, onComingSoonAction, t]);
+    const digits = customer?.phone?.replace(/\D/g, "");
+    const target =
+      digits && customer?.opt_in_whatsapp && !isDemoSession()
+        ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    await Linking.openURL(target).catch(() => showToast(t("lead.status_update_failed"), "error"));
+  }, [customer, lead, showToast, t]);
+
+  // Primary funnel action: new/assigned -> contacted -> converted (PATCH /leads/{id}).
+  const nextStatus = lead ? nextPrimaryStatus(lead.status) : null;
+  const onAdvanceStatus = useCallback(async () => {
+    if (!lead || !nextStatus || updating) return;
+    haptic.medium();
+    setUpdating(true);
+    try {
+      const updated = await api.updateLead(lead.id, { status: nextStatus });
+      setLead(updated);
+      haptic.success();
+      showToast(
+        t("lead.status_updated", { status: t(leadStatusPalette[updated.status].labelKey) }),
+        "success",
+      );
+    } catch (e) {
+      haptic.error();
+      if (e instanceof ApiError && e.status === 409) {
+        showToast(t("lead.invalid_transition", { status: t(leadStatusPalette[nextStatus].labelKey) }), "error");
+      } else {
+        showToast(e instanceof ApiError ? e.message : t("lead.status_update_failed"), "error");
+      }
+    } finally {
+      setUpdating(false);
+    }
+  }, [lead, nextStatus, updating, showToast, t]);
 
   const onFooterLayout = useCallback((e: LayoutChangeEvent) => {
     setFooterHeight(e.nativeEvent.layout.height);
@@ -150,7 +184,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.scroll, { paddingTop: insets.top + spacing["3xl"] }]}>
+        <View style={[styles.scroll, { paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE }]}>
           <Skeleton width={120} height={14} borderRadius={radius.sm} />
           <Skeleton width={240} height={32} borderRadius={radius.sm} />
           <View style={styles.skeletonRow}>
@@ -168,7 +202,7 @@ export default function LeadDetailScreen() {
     return (
       <View style={styles.container}>
         {BackPill}
-        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["3xl"] }]}>
+        <View style={[styles.errorWrap, { paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE }]}>
           <ErrorBanner message={error} onRetry={() => void load()} />
         </View>
       </View>
@@ -197,7 +231,7 @@ export default function LeadDetailScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + spacing["3xl"],
+            paddingTop: insets.top + spacing["3xl"] + BACK_PILL_CLEARANCE,
             paddingBottom: insets.bottom + footerHeight + spacing.lg,
           },
         ]}
@@ -205,7 +239,7 @@ export default function LeadDetailScreen() {
       >
         <Text style={styles.labelCaps}>{t("lead.section.customer")}</Text>
         <Text style={styles.customerName} numberOfLines={1}>
-          {customer?.full_name ?? customerNameFor(lead.customer_id)}
+          {customer?.full_name ?? lead.customer_name ?? customerNameFor(lead.customer_id)}
         </Text>
 
         {/* Priority como badge filled (urgencia comunica visualmente);
@@ -229,6 +263,12 @@ export default function LeadDetailScreen() {
         <Text style={styles.metaLine}>
           {t("lead.vin_label")} · {lead.vin ?? "—"}
         </Text>
+        {lead.vehicle_model ? (
+          <Text style={styles.metaLine}>
+            {t("lead.vehicle")} · {lead.vehicle_model}
+            {lead.vehicle_year ? ` ${lead.vehicle_year}` : ""}
+          </Text>
+        ) : null}
 
         {relativeTime ? (
           <Text style={styles.created}>
@@ -241,6 +281,15 @@ export default function LeadDetailScreen() {
             <View style={styles.glassSectionInner}>
               <Text style={styles.sectionLabel}>{t("lead.section.reason")}</Text>
               <Text style={styles.sectionBody}>{lead.reason}</Text>
+            </View>
+          </GlassSurface>
+        ) : null}
+
+        {lead.churn_probability != null ? (
+          <GlassSurface variant="thin" radius={20} style={styles.glassSection}>
+            <View style={styles.glassSectionInner}>
+              <Text style={styles.sectionLabel}>{t("lead.churn")}</Text>
+              <Text style={styles.valueBig}>{Math.round(lead.churn_probability * 100)}%</Text>
             </View>
           </GlassSurface>
         ) : null}
@@ -273,16 +322,21 @@ export default function LeadDetailScreen() {
             disabled={!customer?.phone}
           />
           <FooterAction
-            icon="chatbubble-ellipses-outline"
+            icon="logo-whatsapp"
             label={t("lead.actions.message")}
-            onPress={() => onComingSoonAction("lead.actions.message")}
-            disabled
+            onPress={() => void onWhatsAppPress()}
           />
           <FooterAction
-            icon="checkmark-circle-outline"
-            label={t("lead.actions.mark_contacted")}
-            onPress={() => onComingSoonAction("lead.actions.mark_contacted")}
-            disabled
+            icon={nextStatus === "converted" ? "trophy-outline" : "checkmark-circle-outline"}
+            label={
+              nextStatus === "converted"
+                ? t("lead.actions.mark_converted")
+                : nextStatus
+                  ? t("lead.actions.mark_contacted")
+                  : t("lead.actions.done")
+            }
+            onPress={() => void onAdvanceStatus()}
+            disabled={!nextStatus || updating}
           />
         </View>
       </GlassSurface>

@@ -82,7 +82,7 @@ export function LeadCard({ lead, onPress }: LeadCardProps) {
         </View>
 
         <Text style={styles.customer} numberOfLines={1}>
-          {customerNameFor(lead.customer_id)}
+          {lead.customer_name ?? customerNameFor(lead.customer_id)}
         </Text>
 
         <Text style={styles.vin} numberOfLines={1}>

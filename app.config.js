@@ -1,21 +1,22 @@
-// Dynamic Expo config — wraps app.json so `extra` can be sourced from
-// EXPO_PUBLIC_* env vars at build time. This is how every environment override
-// (local API vs Fly prod, dev Supabase vs prod) flows into the runtime via
-// Constants.expoConfig.extra.
+// Dynamic Expo config. Wraps app.json so build-time env vars flow into the
+// runtime (Constants.expoConfig.extra) and into native build properties.
 //
-// Config dinamica do Expo: envolve o app.json para que `extra` seja sobrescrito
-// por variaveis EXPO_PUBLIC_* no build. Default aponta pra Fly de producao
-// porque eh o caminho que vai funcionar pra qualquer dev fora da rede LAN.
+// Config dinamica do Expo: variaveis EXPO_PUBLIC_* no build viram `extra`.
+//   EXPO_PUBLIC_API_URL  URL da forward-api-java (default: Fly.io, HTTPS)
+//   ALLOW_HTTP=1         so para builds de teste local (emulador -> http://10.0.2.2:8080);
+//                        o APK de release fica HTTPS-only (cleartext bloqueado).
 
 const DEFAULT_API_URL = "https://forward-api-java.fly.dev";
-const DEFAULT_SUPABASE_URL = "https://ysewoopjgdpvnkfhffgy.supabase.co";
+const allowHttp = process.env.ALLOW_HTTP === "1";
 
 module.exports = ({ config }) => ({
   ...config,
+  plugins: [
+    ...(config.plugins ?? []),
+    ["expo-build-properties", { android: { usesCleartextTraffic: allowHttp } }],
+  ],
   extra: {
     ...config.extra,
-    apiBaseUrl: process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL,
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? DEFAULT_SUPABASE_URL,
-    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? config.extra?.supabaseAnonKey,
+    apiBaseUrl: process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL,
   },
 });
