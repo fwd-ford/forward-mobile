@@ -52,7 +52,7 @@ adb install -r ForwardService-v3.0.0.apk
 
 | Opção | Como | Quando usar |
 |---|---|---|
-| **Login real (JWT)** | `atendente@forward.dev` / `Forward@2026`. O link "Usar usuário de teste" preenche os campos. Também há `gestor@forward.dev` e `admin@forward.dev`, com a mesma senha | Quando a API ([forward-api-java](https://github.com/fwd-ford/forward-api-java)) estiver no ar |
+| **Login real (JWT)** | `atendente@forward.dev` / `Forward@2026`. O link "Usar usuário de teste" preenche os campos. Também há `atendente2@forward.dev` (outra concessionária) e `gestor@forward.dev`, com a mesma senha. O `admin@forward.dev` só existe em produção com uma senha própria definida no deploy | Quando a API ([forward-api-java](https://github.com/fwd-ford/forward-api-java)) estiver no ar |
 | **Modo demonstração** | Botão "Explorar em modo demonstração" na tela de login | Sem internet ou com o servidor fora do ar. Usa dados fictícios, e o funil funciona igual |
 
 ---
